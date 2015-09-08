@@ -32,17 +32,20 @@ function hybrid_convolution_linear_scaling_multiple_ranges($excitation_array=arr
 		 *  predefined (during calibration) netgwcu ranges.
 		 *  each range has it's own response function and linear scaling line)
 		 */
-		$x_range=null;
-		foreach ($x_range_array as list($x_range_ndx,list($min,$max))) {
+		$x_range_ndx=null;
+		foreach ($x_range_array as $x_range_ndx=>$x_range) {
+			//print("$x_range_ndx $x_range[0] $x_range[1] \n");
+			$min=$x_range[0];
+			$max=$x_range[1];
 			if (($excitation>=$min)&&($excitation<$max)) {
-				$x_range = $x_range_ndx;
 				$linex=$linex_array[$x_range_ndx];
 				$liney=$liney_array[$x_range_ndx];
-				$lineslope=$linex_array[$x_range_ndx];
+				$lineslope=$lineslope_array[$x_range_ndx];
+				print("$x_range_ndx $linex $liney $lineslope \n");
 				$response_array=$response_arrays[$x_range_ndx];
 			}
 		}
-		if (isset($x_range)) {
+		if (isset($x_range_ndx)) {
 		} else {
 			return null;
 		}

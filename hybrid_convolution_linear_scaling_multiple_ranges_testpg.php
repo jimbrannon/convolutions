@@ -44,21 +44,19 @@ while ($row = pg_fetch_row($results)) {
 	$response_array[$row[0]] = $row[1];
 }
 $response_arrays[1]=$response_array;
-print_r($response_array);
 $response_array=array();
 $results = pg_query($pgconnection, "SELECT timestep,rspfnvalue FROM $pgtable WHERE model_version=4 AND nzone=1 AND nreach=1 AND nrspfn=1 AND xrange_ndx=2 ORDER BY timestep ASC");
 while ($row = pg_fetch_row($results)) {
 	$response_array[$row[0]] = $row[1];
 }
 $response_arrays[2]=$response_array;
-print_r($response_array);
 $response_array=array();
 $results = pg_query($pgconnection, "SELECT timestep,rspfnvalue FROM $pgtable WHERE model_version=4 AND nzone=1 AND nreach=1 AND nrspfn=1 AND xrange_ndx=3 ORDER BY timestep ASC");
 while ($row = pg_fetch_row($results)) {
 	$response_array[$row[0]] = $row[1];
 }
 $response_arrays[3]=$response_array;
-print_r($response_array);
+print_r($response_arrays);
 
 // subtimestep
 $subtimestepcount=12;
@@ -93,5 +91,9 @@ while ($row = pg_fetch_row($results)) {
 	$liney_array[$row[0]] = $row[4];
 	$lineslope_array[$row[0]] = $row[5];
 }
+print_r($linex_array);
+print_r($liney_array);
+print_r($lineslope_array);
+print_r($xrange_array);
 print_r(hybrid_convolution_linear_scaling_multiple_ranges($excitation_array,$response_arrays,$subtimestepcount,$linex_array,$liney_array,$lineslope_array,$xrange_array));
 ?>

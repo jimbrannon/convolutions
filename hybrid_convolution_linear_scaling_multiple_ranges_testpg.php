@@ -1,6 +1,8 @@
 <?php
 /*
- * test the hybrid convolution with linear scaling function
+ * test the hybrid convolution with linear scaling function, 
+ * multiple ranges, and against the vba code with 6P97 SD1 data
+ * for verification
  */
 include("hybrid_convolution_linear_scaling_multiple_ranges.php");
 

@@ -64,19 +64,34 @@ print_r($response_array);
 $subtimestepcount=12;
 
 //linear scaling lines
+//$linex = 5.0;
+//$liney = 100.0;
+//$slope = 10.0;
 $linex_array = array();
 $liney_array = array();
 $lineslope_array = array();
 $xrange_array = array();
 $pgtable = "rg_response_functions";
-$results = pg_query($pgconnection, "SELECT line_xval,line_yval,line_slope FROM $pgtable WHERE model_version=4 AND nzone=1 AND nreach=1 AND nrspfn=1 AND xrange_ndx=1");
+$results = pg_query($pgconnection, "SELECT xrange_ndx,xrange_min,xrange_max,line_xval,line_yval,line_slope FROM $pgtable WHERE model_version=4 AND nzone=1 AND nreach=1 AND nrspfn=1 AND xrange_ndx=1");
 while ($row = pg_fetch_row($results)) {
-	$linex = $row[0];
-	$liney = $row[1];
-	$slope = $row[2];
+	$xrange_array[$row[0]] = array($row[1],$row[2]);
+	$linex_array[$row[0]] = $row[3];
+	$liney_array[$row[0]] = $row[4];
+	$lineslope_array[$row[0]] = $row[5];
 }
-//$linex = 5.0;
-//$liney = 100.0;
-//$slope = 10.0;
-print_r(hybrid_convolution_linear_scaling($excitation_array,$response_array,$subtimestepcount,$linex,$liney,$slope));
+$results = pg_query($pgconnection, "SELECT xrange_ndx,xrange_min,xrange_max,line_xval,line_yval,line_slope FROM $pgtable WHERE model_version=4 AND nzone=1 AND nreach=1 AND nrspfn=1 AND xrange_ndx=2");
+while ($row = pg_fetch_row($results)) {
+	$xrange_array[$row[0]] = array($row[1],$row[2]);
+	$linex_array[$row[0]] = $row[3];
+	$liney_array[$row[0]] = $row[4];
+	$lineslope_array[$row[0]] = $row[5];
+}
+$results = pg_query($pgconnection, "SELECT xrange_ndx,xrange_min,xrange_max,line_xval,line_yval,line_slope FROM $pgtable WHERE model_version=4 AND nzone=1 AND nreach=1 AND nrspfn=1 AND xrange_ndx=3");
+while ($row = pg_fetch_row($results)) {
+	$xrange_array[$row[0]] = array($row[1],$row[2]);
+	$linex_array[$row[0]] = $row[3];
+	$liney_array[$row[0]] = $row[4];
+	$lineslope_array[$row[0]] = $row[5];
+}
+print_r(hybrid_convolution_linear_scaling_multiple_ranges($excitation_array,$response_arrays,$subtimestepcount,$linex_array,$liney_array,$lineslope_array,$xrange_array));
 ?>

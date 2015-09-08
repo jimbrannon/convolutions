@@ -20,6 +20,7 @@
  */
 function hybrid_convolution_linear_scaling($excitation_array=array(), $response_array=array(), $subtimestepcount=1, $linex, $liney, $lineslope) {
 	$result = array();
+	$excitation_counter=0;
 	foreach ($excitation_array as  $timestepindex=>$excitation) {
 		/*
 		 * determine a linear scaling fraction to use against the response function
@@ -29,8 +30,13 @@ function hybrid_convolution_linear_scaling($excitation_array=array(), $response_
 		 */
 		$ye = $liney + ($excitation-$linex)*$lineslope;
 		$linearscalefracton = $ye / $liney;
-		if (!isset($firsttimestepindex)) $firsttimestepindex = $timestepindex;
+		if ($excitation_counter) {
+		} else {
+			$firsttimestepindex = $timestepindex;
+		}
 		$startingsubtimestep = ($timestepindex-$firsttimestepindex) * $subtimestepcount + 1;
+		//echo "timestepindex=".$timestepindex."\n firsttimestepindex=".$firsttimestepindex."\n startingsubtimestep=".$startingsubtimestep."\n";
+		$response_counter=0;
 		foreach ($response_array as $responseindex=>$responsevalue) {
 			// subtract 1 because the response array index is one based
 			if (array_key_exists ($startingsubtimestep+$responseindex-1,$result)) {
@@ -38,7 +44,9 @@ function hybrid_convolution_linear_scaling($excitation_array=array(), $response_
 			} else {
 				$result[$startingsubtimestep+$responseindex-1] = $responsevalue*$linearscalefracton;
 			}
+			++$response_counter;
 		}
+		++$excitation_counter;
 	}
 	return $result;
 }

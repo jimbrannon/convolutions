@@ -29,7 +29,11 @@ function simple_convolution($excitation_array=array(), $response_array=array()) 
 	foreach ($excitation_array as  $timestepindex=>$excitation) {
 		foreach ($response_array as $responseindex=>$responsevalue) {
 			// subtract 1 because the response array index is one based
-			$result[$timestepindex+$responseindex-1] += $responsevalue*$excitation;
+			if (array_key_exists ($timestepindex+$responseindex-1,$result)) {
+				$result[$timestepindex+$responseindex-1] += $responsevalue*$excitation;
+			} else {
+				$result[$timestepindex+$responseindex-1] = $responsevalue*$excitation;
+			}
 		}
 	}
 	return $result;

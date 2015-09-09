@@ -457,7 +457,9 @@ while ($row = pg_fetch_row($results)) {
 	$xrange_array[$xrange_ndx_count] = array($row[1],$row[2]);
 	$linex_array[$xrange_ndx_count] = $row[3];
 	$liney_array[$xrange_ndx_count] = $row[4];
-	$lineslope_array[$xrange_ndx_count] = $row[5];
+	// note that the rgdss slope has been normalized,
+	//   so cpnvert it back to a standard slope
+	$lineslope_array[$xrange_ndx_count] = $row[4]*$row[5];
 }
 
 

@@ -497,4 +497,5 @@ $results = hybrid_convolution_linear_scaling_multiple_ranges(
 				$liney_array,
 				$lineslope_array,
 				$xrange_array);
+print_r($results);
 ?>

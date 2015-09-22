@@ -45,9 +45,9 @@ $options[PGDB]="d7dev";
 $options[PGHOST]="localhost";
 $options[PGPORT]=5432;
 
-$options[RGMODELVERSION]=4; // 4 is 6P97
-$options[RGRESPONSEZONE]=1; // 1 is SD1
-$options[RGSTREAMREACH]=1; // 1 is RG1 (del norte to excelsior)
+$options[RGMODELVERSION]=5; // 4 is 6P97, 5 is 6P98
+$options[RGRESPONSEZONE]=1; // 1 is SD1 confined gw, 2 is SD2 alluvial gw, 3 is Conejos, etc.
+$options[RGSTREAMREACH]=2; // 1 is RG1 (del norte to excelsior), 2 is RG2 (excelsior to chicago), etc.
 $options[RGRESPFNVERSION]=1; // 1 would be the usual, the officially released one from DWR, unless there happen to multiple versions in the database
 //$subtimestepcount
 $options[RGSUBTIMESTEPCOUNT]=12; // 12 would be the usual, years to months

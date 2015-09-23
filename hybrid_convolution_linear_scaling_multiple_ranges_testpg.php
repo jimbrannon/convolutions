@@ -61,7 +61,7 @@ $options[PGDB]="d7dev";
 $options[PGHOST]="localhost";
 $options[PGPORT]=5432;
 
-$options[RGSTREAMDEPLETIONSCENARIO]=1; // 1 is 6P98 official data, 1970-2015
+$options[RGSTREAMDEPLETIONSCENARIO]=2; // 1 is 6P97 official data, 1970-2015, 2 is 6P98
 $options[RGSTREAMDEPLETIONSCENARIOTABLE]="rg_stream_depletion_scenarios";
 $options[RGSTREAMDEPLETIONDATATABLE]="rg_stream_depletion_data";
 

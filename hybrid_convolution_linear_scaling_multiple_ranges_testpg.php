@@ -346,10 +346,10 @@ while ($row = pg_fetch_row($results)) {
 	$options[RGMODELVERSION] = $row[0]; 
 	$options[RGRESPONSEZONE] = $row[1]; 
 	$options[RGPERIODYRTABLE] = $row[2]; 
-	$options[RGNETGWCUYRTABLE] = $row[3]; 
-	$options[RGPUMPINGYRTABLE] = $row[4]; 
-	$options[RGEFFICIENCYYRTABLE] = $row[5]; 
-	$options[RGRECHARGEYRTABLE] = $row[6]; 
+	$options[RGNETGWCUYRVERSION] = $row[3]; 
+	$options[RGPUMPINGYRVERSION] = $row[4]; 
+	$options[RGEFFICIENCYYRVERSION] = $row[5]; 
+	$options[RGRECHARGEYRVERSION] = $row[6]; 
 	$options[RGSTREAMREACH] = $row[7]; 
 	$options[RGRESPFNVERSION] = $row[8]; 
 }
@@ -382,6 +382,136 @@ if ($rgmodelversion > 0) {
 	// can not proceed without this
     if ($logging) echo "invalid rgmodelversion: $rgmodelversion exiting \n";
 	if ($debugging) echo "invalid rgmodelversion: $rgmodelversion exiting \n";
+	return;
+}
+/*
+ * get the rg period data (years) version arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGPERIODYRVERSION,$options)) {
+	$rgperiodyrversion = $options[RGPERIODYRVERSION];
+} else {
+	// we can not set a default for this
+	$rgperiodyrversion = 0; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgperiodyrversion default: $rgperiodyrversion \n";
+$rgperiodyrversion_arg = getargs (RGPERIODYRVERSION,$rgperiodyrversion);
+if ($debugging) echo "rgperiodyrversion_arg: $rgperiodyrversion_arg \n";
+if (strlen($rgperiodyrversion_arg=trim($rgperiodyrversion_arg))) {
+	$rgperiodyrversion = intval($rgperiodyrversion_arg);
+}
+if ($rgperiodyrversion > 0) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgperiodyrversion: $rgperiodyrversion \n";
+	$options[RGPERIODYRVERSION] = $rgperiodyrversion;
+} else {
+	// can not proceed without this
+    if ($logging) echo "invalid rgperiodyrversion: $rgperiodyrversion exiting \n";
+	if ($debugging) echo "invalid rgperiodyrversion: $rgperiodyrversion exiting \n";
+	return;
+}
+/*
+ * get the rg netgwcu annual data version arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGNETGWCUYRVERSION,$options)) {
+	$rgnetgwcuyrversion = $options[RGNETGWCUYRVERSION];
+} else {
+	// we can not set a default for this
+	$rgnetgwcuyrversion = 0; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgnetgwcuyrversion default: $rgnetgwcuyrversion \n";
+$rgnetgwcuyrversion_arg = getargs (RGNETGWCUYRVERSION,$rgnetgwcuyrversion);
+if ($debugging) echo "rgnetgwcuyrversion_arg: $rgnetgwcuyrversion_arg \n";
+if (strlen($rgnetgwcuyrversion_arg=trim($rgnetgwcuyrversion_arg))) {
+	$rgnetgwcuyrversion = intval($rgnetgwcuyrversion_arg);
+}
+if ($rgnetgwcuyrversion > 0) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgnetgwcuyrversion: $rgnetgwcuyrversion \n";
+	$options[RGNETGWCUYRVERSION] = $rgnetgwcuyrversion;
+} else {
+	// can not proceed without this
+    if ($logging) echo "invalid rgnetgwcuyrversion: $rgnetgwcuyrversion exiting \n";
+	if ($debugging) echo "invalid rgnetgwcuyrversion: $rgnetgwcuyrversion exiting \n";
+	return;
+}
+/*
+ * get the rg pumping annual data version arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGPUMPINGYRVERSION,$options)) {
+	$rgpumpingyrversion = $options[RGPUMPINGYRVERSION];
+} else {
+	// we can not set a default for this
+	$rgpumpingyrversion = 0; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgpumpingyrversion default: $rgpumpingyrversion \n";
+$rgpumpingyrversion_arg = getargs (RGPUMPINGYRVERSION,$rgpumpingyrversion);
+if ($debugging) echo "rgpumpingyrversion_arg: $rgpumpingyrversion_arg \n";
+if (strlen($rgpumpingyrversion_arg=trim($rgpumpingyrversion_arg))) {
+	$rgpumpingyrversion = intval($rgpumpingyrversion_arg);
+}
+if ($rgpumpingyrversion > 0) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgpumpingyrversion: $rgpumpingyrversion \n";
+	$options[RGPUMPINGYRVERSION] = $rgpumpingyrversion;
+} else {
+	// can not proceed without this
+    if ($logging) echo "invalid rgpumpingyrversion: $rgpumpingyrversion exiting \n";
+	if ($debugging) echo "invalid rgpumpingyrversion: $rgpumpingyrversion exiting \n";
+	return;
+}
+/*
+ * get the rg pumping efficiency annual data version arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGEFFICIENCYYRVERSION,$options)) {
+	$rgefficiencyyrversion = $options[RGEFFICIENCYYRVERSION];
+} else {
+	// we can not set a default for this
+	$rgefficiencyyrversion = 0; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgefficiencyyrversion default: $rgefficiencyyrversion \n";
+$rgefficiencyyrversion_arg = getargs (RGEFFICIENCYYRVERSION,$rgefficiencyyrversion);
+if ($debugging) echo "rgefficiencyyrversion_arg: $rgefficiencyyrversion_arg \n";
+if (strlen($rgefficiencyyrversion_arg=trim($rgefficiencyyrversion_arg))) {
+	$rgefficiencyyrversion = intval($rgefficiencyyrversion_arg);
+}
+if ($rgefficiencyyrversion > 0) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgefficiencyyrversion: $rgefficiencyyrversion \n";
+	$options[RGEFFICIENCYYRVERSION] = $rgefficiencyyrversion;
+} else {
+	// can not proceed without this
+    if ($logging) echo "invalid rgefficiencyyrversion: $rgefficiencyyrversion exiting \n";
+	if ($debugging) echo "invalid rgefficiencyyrversion: $rgefficiencyyrversion exiting \n";
+	return;
+}
+/*
+ * get the rg recharge annual data version arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGrechargeYRVERSION,$options)) {
+	$rgrechargeyrversion = $options[RGrechargeYRVERSION];
+} else {
+	// we can not set a default for this
+	$rgrechargeyrversion = 0; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgrechargeyrversion default: $rgrechargeyrversion \n";
+$rgrechargeyrversion_arg = getargs (RGrechargeYRVERSION,$rgrechargeyrversion);
+if ($debugging) echo "rgrechargeyrversion_arg: $rgrechargeyrversion_arg \n";
+if (strlen($rgrechargeyrversion_arg=trim($rgrechargeyrversion_arg))) {
+	$rgrechargeyrversion = intval($rgrechargeyrversion_arg);
+}
+if ($rgrechargeyrversion > 0) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgrechargeyrversion: $rgrechargeyrversion \n";
+	$options[RGrechargeYRVERSION] = $rgrechargeyrversion;
+} else {
+	// can not proceed without this
+    if ($logging) echo "invalid rgrechargeyrversion: $rgrechargeyrversion exiting \n";
+	if ($debugging) echo "invalid rgrechargeyrversion: $rgrechargeyrversion exiting \n";
 	return;
 }
 /*

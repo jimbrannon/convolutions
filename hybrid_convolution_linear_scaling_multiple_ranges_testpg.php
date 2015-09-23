@@ -342,6 +342,7 @@ $query .= " FROM $rgstreamdepletionscenariotable";
 $query .= " WHERE ndx=$rgstreamdepletionscenario";
 $results = pg_query($pgconnection, $query);
 while ($row = pg_fetch_row($results)) {
+    if($debugging) print_r($row);
 	$options[RGMODELVERSION] = $row[0]; 
 	$options[RGRESPONSEZONE] = $row[1]; 
 	$options[RGPERIODYRTABLE] = $row[2]; 
@@ -352,8 +353,8 @@ while ($row = pg_fetch_row($results)) {
 	$options[RGSTREAMREACH] = $row[7]; 
 	$options[RGRESPFNVERSION] = $row[8]; 
 }
-//print_r($netgwcu_array);
-
+if($debugging) print_r($options);
+return;
 /*
  * now get the rest of the args
  */

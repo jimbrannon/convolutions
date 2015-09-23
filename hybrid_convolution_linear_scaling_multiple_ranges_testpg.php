@@ -492,14 +492,14 @@ if ($rgefficiencyyrversion > 0) {
  * get the rg recharge annual data version arg
  * this is required, so bail if it is not set from either the default above or the cli arg
  */
-if (array_key_exists(RGrechargeYRVERSION,$options)) {
-	$rgrechargeyrversion = $options[RGrechargeYRVERSION];
+if (array_key_exists(RGRECHARGEYRVERSION,$options)) {
+	$rgrechargeyrversion = $options[RGRECHARGEYRVERSION];
 } else {
 	// we can not set a default for this
 	$rgrechargeyrversion = 0; // set it to an invalid value and check later
 }
 if ($debugging) echo "rgrechargeyrversion default: $rgrechargeyrversion \n";
-$rgrechargeyrversion_arg = getargs (RGrechargeYRVERSION,$rgrechargeyrversion);
+$rgrechargeyrversion_arg = getargs (RGRECHARGEYRVERSION,$rgrechargeyrversion);
 if ($debugging) echo "rgrechargeyrversion_arg: $rgrechargeyrversion_arg \n";
 if (strlen($rgrechargeyrversion_arg=trim($rgrechargeyrversion_arg))) {
 	$rgrechargeyrversion = intval($rgrechargeyrversion_arg);
@@ -507,7 +507,7 @@ if (strlen($rgrechargeyrversion_arg=trim($rgrechargeyrversion_arg))) {
 if ($rgrechargeyrversion > 0) {
 	// a potentially valid value, use it
 	if ($debugging) echo "final rgrechargeyrversion: $rgrechargeyrversion \n";
-	$options[RGrechargeYRVERSION] = $rgrechargeyrversion;
+	$options[RGRECHARGEYRVERSION] = $rgrechargeyrversion;
 } else {
 	// can not proceed without this
     if ($logging) echo "invalid rgrechargeyrversion: $rgrechargeyrversion exiting \n";

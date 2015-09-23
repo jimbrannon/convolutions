@@ -41,7 +41,7 @@ function hybrid_convolution_linear_scaling_multiple_ranges($excitation_array=arr
 				$linex=$linex_array[$x_range_ndx];
 				$liney=$liney_array[$x_range_ndx];
 				$lineslope=$lineslope_array[$x_range_ndx];
-				print("$x_range_ndx $linex $liney $lineslope \n");
+				//print("$x_range_ndx $linex $liney $lineslope \n");
 				$response_array=$response_arrays[$x_range_ndx];
 			}
 		}

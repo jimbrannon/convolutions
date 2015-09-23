@@ -51,7 +51,7 @@ define("RGRECHARGEYRTABLE","rgrechargeyrtable");
  * in other words, defaults get used unless over-ridden by command line args
  * the difference is they all get stuffed into an options array, makes for much cleaner code
  */
-$options[DEBUGGING]=false;
+$options[DEBUGGING]=true;
 $options[LOGGING]=true;
 
 $options[PGUSER]="drupal";
@@ -354,7 +354,6 @@ while ($row = pg_fetch_row($results)) {
 	$options[RGRESPFNVERSION] = $row[8]; 
 }
 if($debugging) print_r($options);
-return;
 /*
  * now get the rest of the args
  */

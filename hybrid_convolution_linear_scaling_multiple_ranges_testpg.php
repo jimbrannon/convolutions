@@ -19,6 +19,9 @@ define("PGHOST","pghost");
 define("PGDB","pgdb");
 define("PGPORT","pgport");
 
+define("RGSTREAMDEPLETIONSCENARIO","rgstreamdepletionscenario");
+define("RGSTREAMDEPLETIONSCENARIOTABLE","rgstreamdepletionscenariotable");
+
 define("RGMODELVERSION","rgmodelversion");
 define("RGRESPONSEZONE","rgresponsezone");
 define("RGSTREAMREACH","rgstreamreach");
@@ -57,6 +60,14 @@ $options[PGDB]="d7dev";
 $options[PGHOST]="localhost";
 $options[PGPORT]=5432;
 
+$options[RGSTREAMDEPLETIONSCENARIO]=1; // 1 is 6P98 official data, 1970-2015
+$options[RGSTREAMDEPLETIONSCENARIOTABLE]="rg_stream_depletion_scenarios";
+
+/*
+ * setting these no longer has any effect these,
+ * since they get over-written with the values in the stream depletion scenario table
+ * but if somehow that fails (unlikely to be allowed), it would fall back to these as defaults
+ */
 $options[RGMODELVERSION]=5; // 4 is 6P97, 5 is 6P98
 $options[RGRESPONSEZONE]=1; // 1 is SD1 confined gw, 2 is SD2 alluvial gw, 3 is Conejos, etc.
 $options[RGSTREAMREACH]=1; // 1 is RG1 (del norte to excelsior), 2 is RG2 (excelsior to chicago), etc.
@@ -79,6 +90,7 @@ $options[RGRECHARGEYRTABLE]="rg_response_zone_recharge_annual_data";
 
 /*
  * handle the args right here in the wrapper
+ * first get the ones necessary to read the stream depletions scenario table
  */
 
 /*
@@ -213,7 +225,6 @@ if (strlen($pghost)) {
 	if ($debugging) echo "missing pghost exiting \n";
 	return;
 }
-
 /*
  * get the pgport arg
  * this is required, so bail if it is not set from either the default above or the cli arg
@@ -240,6 +251,112 @@ if ($pgport > 0) {
 	if ($debugging) echo "invalid pgport: $pgport exiting \n";
 	return;
 }
+/*
+ * get the rg stream depletion scenario arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGSTREAMDEPLETIONSCENARIO,$options)) {
+	$rgstreamdepletionscenario = $options[RGSTREAMDEPLETIONSCENARIO];
+} else {
+	// we can not set a default for this
+	$rgstreamdepletionscenario = 0; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgstreamdepletionscenario default: $rgstreamdepletionscenario \n";
+$rgstreamdepletionscenario_arg = getargs (RGSTREAMDEPLETIONSCENARIO,$rgstreamdepletionscenario);
+if ($debugging) echo "rgstreamdepletionscenario_arg: $rgstreamdepletionscenario_arg \n";
+if (strlen($rgstreamdepletionscenario_arg=trim($rgstreamdepletionscenario_arg))) {
+	$rgstreamdepletionscenario = intval($rgstreamdepletionscenario_arg);
+}
+if ($rgstreamdepletionscenario > 0) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgstreamdepletionscenario: $rgstreamdepletionscenario \n";
+	$options[RGSTREAMDEPLETIONSCENARIO] = $rgstreamdepletionscenario;
+} else {
+	// can not proceed without this
+	if ($logging) echo "invalid rgstreamdepletionscenario: $rgstreamdepletionscenario exiting \n";
+	if ($debugging) echo "invalid rgstreamdepletionscenario: $rgstreamdepletionscenario exiting \n";
+	return;
+}
+/*
+ * get the stream depletion scenario table arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGSTREAMDEPLETIONSCENARIOTABLE,$options)) {
+	$rgstreamdepletionscenariotable = trim($options[RGSTREAMDEPLETIONSCENARIOTABLE]);
+} else {
+	// we can NOT set a default for this
+	$rgstreamdepletionscenariotable = ""; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgstreamdepletionscenariotable default: $rgstreamdepletionscenariotable \n";
+$rgstreamdepletionscenariotable_arg = getargs (RGSTREAMDEPLETIONSCENARIOTABLE,$rgstreamdepletionscenariotable);
+if ($debugging) echo "rgstreamdepletionscenariotable_arg: $rgstreamdepletionscenariotable_arg \n";
+if (strlen($rgstreamdepletionscenariotable_arg=trim($rgstreamdepletionscenariotable_arg))) {
+	$rgstreamdepletionscenariotable = $rgstreamdepletionscenariotable_arg;
+}
+if (strlen($rgstreamdepletionscenariotable)) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgstreamdepletionscenariotable: $rgstreamdepletionscenariotable \n";
+	$options[RGSTREAMDEPLETIONSCENARIOTABLE] = $rgstreamdepletionscenariotable;
+} else {
+	// can not proceed without this
+	if ($logging) echo "missing $rgstreamdepletionscenariotable exiting \n";
+	if ($debugging) echo "missing $rgstreamdepletionscenariotable exiting \n";
+	return;
+}
+
+/*
+ * make the pg coonnection
+ */
+$pgconnectionstring = "dbname=$pgdb host=$pghost port=$pgport";
+if (strlen($pguser)) {
+	$pgconnectionstring .= " user=$pguser";
+}
+if (strlen($pgpassword)) {
+	$pgconnectionstring .= " password=$pgpassword";
+}
+$pgconnection = pg_connect($pgconnectionstring);
+if (!$pgconnection) {
+	if ($logging) echo "Error: could not make database connection: ".pg_last_error($pgconnection);
+	return;
+}
+
+/*
+ * get the stream depletion scenario parameters
+ *   these essentially become the defaults,
+ *     but it is unlikely anyone (except me...)
+ *     will input separate parameters to over-ride them
+ *     because it will still get written to the output table
+ *     using the $rgstreamdepletionscenario value
+ */
+$query = "SELECT ";
+$query .= "model_version,";
+$query .= "nzone,";
+$query .= "nperiodyrscenario,";
+$query .= "nnetgwcuyrscenario,";
+$query .= "npumpingyrscenario,";
+$query .= "nefficiencyyrscenario,";
+$query .= "nrechargeyrscenario,";
+$query .= "nreach,";
+$query .= "nrspfn ";
+$query .= " FROM $rgstreamdepletionscenariotable";
+$query .= " WHERE ndx=$rgstreamdepletionscenario";
+$results = pg_query($pgconnection, $query);
+while ($row = pg_fetch_row($results)) {
+	$options[RGMODELVERSION] = $row[0]; 
+	$options[RGRESPONSEZONE] = $row[1]; 
+	$options[RGPERIODYRTABLE] = $row[2]; 
+	$options[RGNETGWCUYRTABLE] = $row[3]; 
+	$options[RGPUMPINGYRTABLE] = $row[4]; 
+	$options[RGEFFICIENCYYRTABLE] = $row[5]; 
+	$options[RGRECHARGEYRTABLE] = $row[6]; 
+	$options[RGSTREAMREACH] = $row[7]; 
+	$options[RGRESPFNVERSION] = $row[8]; 
+}
+//print_r($netgwcu_array);
+
+/*
+ * now get the rest of the args
+ */
 
 /*
  * get the rg model version arg
@@ -526,23 +643,6 @@ if (strlen($rgrechargeyrtable)) {
 	// can not proceed without this
 	if ($logging) echo "missing rgrechargeyrtable exiting \n";
 	if ($debugging) echo "missing rgrechargeyrtable exiting \n";
-	return;
-}
-
-
-/*
- * make the pg coonnection
- */
-$pgconnectionstring = "dbname=$pgdb host=$pghost port=$pgport";
-if (strlen($pguser)) {
-	$pgconnectionstring .= " user=$pguser";
-}
-if (strlen($pgpassword)) {
-	$pgconnectionstring .= " password=$pgpassword";
-}
-$pgconnection = pg_connect($pgconnectionstring);
-if (!$pgconnection) {
-	if ($logging) echo "Error: could not make database connection: ".pg_last_error($pgconnection);
 	return;
 }
 

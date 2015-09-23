@@ -964,7 +964,7 @@ $results = hybrid_convolution_linear_scaling_multiple_ranges(
 
 if(count($results)) {
 	$delete_array['nscenario']=$rgstreamdepletionscenario;
-	pg_delete($pgconnection,$delete_array);
+	pg_delete($pgconnection,$rgstreamdepletiondatatable,$delete_array);
 	foreach ($results as $ndx=>$value) {
 		$insert_array['nscenario'] = $rgstreamdepletionscenario;
 		$insert_array['timestepindex'] = $ndx+($startyear-1900)*$subtimestepcount;

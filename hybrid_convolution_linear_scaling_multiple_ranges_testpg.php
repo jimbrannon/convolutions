@@ -82,7 +82,7 @@ $options[RGSUBTIMESTEPCOUNT]=12; // 12 would be the usual, years to months
 
 $options[RGRESPFNFTABLE]="rg_response_functions";
 $options[RGRESPFNDATATABLE]="rg_response_function_data";
-$options[RGPERIODYRTABLE]="rg_response_zone_period_annual_data";
+$options[RGPERIODYRTABLE]="rg_response_zone_period_annual_scenarios";
 $options[RGNETGWCUYRTABLE]="rg_response_zone_netgwcu_annual_data"; //used to be RGGWNETCUYRTABLE
 $options[RGPUMPINGYRTABLE]="rg_response_zone_pumping_annual_data";
 $options[RGEFFICIENCYYRTABLE]="rg_response_zone_pumping_efficiency_annual_data";
@@ -345,7 +345,7 @@ while ($row = pg_fetch_row($results)) {
     if($debugging) print_r($row);
 	$options[RGMODELVERSION] = $row[0]; 
 	$options[RGRESPONSEZONE] = $row[1]; 
-	$options[RGPERIODYRTABLE] = $row[2]; 
+	$options[RGPERIODYRVERSION] = $row[2]; 
 	$options[RGNETGWCUYRVERSION] = $row[3]; 
 	$options[RGPUMPINGYRVERSION] = $row[4]; 
 	$options[RGEFFICIENCYYRVERSION] = $row[5]; 

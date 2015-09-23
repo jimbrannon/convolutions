@@ -21,6 +21,7 @@ define("PGPORT","pgport");
 
 define("RGSTREAMDEPLETIONSCENARIO","rgstreamdepletionscenario");
 define("RGSTREAMDEPLETIONSCENARIOTABLE","rgstreamdepletionscenariotable");
+define("RGSTREAMDEPLETIONDATATABLE","rgstreamdepletiondatatable");
 
 define("RGMODELVERSION","rgmodelversion");
 define("RGRESPONSEZONE","rgresponsezone");
@@ -62,6 +63,7 @@ $options[PGPORT]=5432;
 
 $options[RGSTREAMDEPLETIONSCENARIO]=1; // 1 is 6P98 official data, 1970-2015
 $options[RGSTREAMDEPLETIONSCENARIOTABLE]="rg_stream_depletion_scenarios";
+$options[RGSTREAMDEPLETIONDATATABLE]="rg_stream_depletion_data";
 
 /*
  * setting these no longer has any effect these,
@@ -301,6 +303,32 @@ if (strlen($rgstreamdepletionscenariotable)) {
 	// can not proceed without this
 	if ($logging) echo "missing $rgstreamdepletionscenariotable exiting \n";
 	if ($debugging) echo "missing $rgstreamdepletionscenariotable exiting \n";
+	return;
+}
+/*
+ * get the stream depletion data table arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGSTREAMDEPLETIONDATATABLE,$options)) {
+	$rgstreamdepletiondatatable = trim($options[RGSTREAMDEPLETIONDATATABLE]);
+} else {
+	// we can NOT set a default for this
+	$rgstreamdepletiondatatable = ""; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgstreamdepletiondatatable default: $rgstreamdepletiondatatable \n";
+$rgstreamdepletiondatatable_arg = getargs (RGSTREAMDEPLETIONDATATABLE,$rgstreamdepletiondatatable);
+if ($debugging) echo "rgstreamdepletiondatatable_arg: $rgstreamdepletiondatatable_arg \n";
+if (strlen($rgstreamdepletiondatatable_arg=trim($rgstreamdepletiondatatable_arg))) {
+	$rgstreamdepletiondatatable = $rgstreamdepletiondatatable_arg;
+}
+if (strlen($rgstreamdepletiondatatable)) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgstreamdepletiondatatable: $rgstreamdepletiondatatable \n";
+	$options[RGSTREAMDEPLETIONDATATABLE] = $rgstreamdepletiondatatable;
+} else {
+	// can not proceed without this
+	if ($logging) echo "missing $rgstreamdepletiondatatable exiting \n";
+	if ($debugging) echo "missing $rgstreamdepletiondatatable exiting \n";
 	return;
 }
 
@@ -941,7 +969,7 @@ if(count($results)) {
 		$insert_array['nscenario'] = $rgstreamdepletionscenario;
 		$insert_array['timestepindex'] = $ndx+($startyear-1900)*$subtimestepcount;
 		$insert_array['value'] = $value;
-		pg_insert($pgconnection,$insert_array);
+		pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
 	}
 }
 //print_r($results);

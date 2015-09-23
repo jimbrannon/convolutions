@@ -23,11 +23,23 @@ define("RGMODELVERSION","rgmodelversion");
 define("RGRESPONSEZONE","rgresponsezone");
 define("RGSTREAMREACH","rgstreamreach");
 define("RGRESPFNVERSION","rgrespfnversion");
+
+define("RGPERIODYRVERSION","rgperiodyrversion");
+define("RGNETGWCUYRVERSION","rgnetgwcuyrversion");
+define("RGPUMPINGYRVERSION","rgpumpingyrversion");
+define("RGEFFICIENCYYRVERSION","rgefficiencyyrversion");
+define("RGRECHARGEYRVERSION","rgrechargeyrversion");
+
 define("RGSUBTIMESTEPCOUNT","rgsubtimestepcount");
 
 define("RGRESPFNFTABLE","rgrespfntable");
 define("RGRESPFNDATATABLE","rgrespfndatatable");
-define("RGGWNETCUYRTABLE","rggwnetcuyrtable");
+define("RGPERIODYRTABLE","rgperiodyrtable");
+define("RGNETGWCUYRTABLE","rgnetgwcuyrtable"); //used to be RGGWNETCUYRTABLE
+define("RGPUMPINGYRTABLE","rgpumpingyrtable");
+define("RGEFFICIENCYYRTABLE","rgefficiencyyrtable");
+define("RGRECHARGEYRTABLE","rgrechargeyrtable");
+
 
 /*
  * argument defaults
@@ -47,14 +59,23 @@ $options[PGPORT]=5432;
 
 $options[RGMODELVERSION]=5; // 4 is 6P97, 5 is 6P98
 $options[RGRESPONSEZONE]=1; // 1 is SD1 confined gw, 2 is SD2 alluvial gw, 3 is Conejos, etc.
-$options[RGSTREAMREACH]=2; // 1 is RG1 (del norte to excelsior), 2 is RG2 (excelsior to chicago), etc.
+$options[RGSTREAMREACH]=1; // 1 is RG1 (del norte to excelsior), 2 is RG2 (excelsior to chicago), etc.
 $options[RGRESPFNVERSION]=1; // 1 would be the usual, the officially released one from DWR, unless there happen to multiple versions in the database
+$options[RGPERIODYRVERSION]=1; // 0 - all the years in the input data, 1 - modeled period (for example 1970-2010 for 6P98), 2 - 1970-2015
+$options[RGNETGWCUYRVERSION]=1; // 1 - the official netgwcu annual values for the model version (used in the response function calibration)
+$options[RGPUMPINGYRVERSION]=1; // 1 - the official annual well pumping total used in the ARP reports for this zone and for this model version
+$options[RGEFFICIENCYYRVERSION]=1; // 1 - the official annual well pumping efficiency values used in the ARP reports for this zone and for this model version
+$options[RGRECHARGEYRVERSION]=1; // 1 - the official annual decreed aquifer recharge values used in the ARP reports for this zone and for this model version
 //$subtimestepcount
 $options[RGSUBTIMESTEPCOUNT]=12; // 12 would be the usual, years to months
 
 $options[RGRESPFNFTABLE]="rg_response_functions";
 $options[RGRESPFNDATATABLE]="rg_response_function_data";
-$options[RGGWNETCUYRTABLE]="rg_response_zone_model_data_annual";
+$options[RGPERIODYRTABLE]="rg_response_zone_period_annual_data";
+$options[RGNETGWCUYRTABLE]="rg_response_zone_netgwcu_annual_data"; //used to be RGGWNETCUYRTABLE
+$options[RGPUMPINGYRTABLE]="rg_response_zone_pumping_annual_data";
+$options[RGEFFICIENCYYRTABLE]="rg_response_zone_pumping_efficiency_annual_data";
+$options[RGRECHARGEYRTABLE]="rg_response_zone_recharge_annual_data";
 
 /*
  * handle the args right here in the wrapper
@@ -378,31 +399,136 @@ if (strlen($rgrespfndatatable)) {
 	return;
 }
 /*
- * get the rggwnetcuyrtable arg
+ * get the rgnetgwcuyrtable arg
  * this is required, so bail if it is not set from either the default above or the cli arg
  */
-if (array_key_exists(RGGWNETCUYRTABLE,$options)) {
-	$rggwnetcuyrtable = trim($options[RGGWNETCUYRTABLE]);
+if (array_key_exists(RGNETGWCUYRTABLE,$options)) {
+	$rgnetgwcuyrtable = trim($options[RGNETGWCUYRTABLE]);
 } else {
 	// we can NOT set a default for this
-	$rggwnetcuyrtable = ""; // set it to an invalid value and check later
+	$rgnetgwcuyrtable = ""; // set it to an invalid value and check later
 }
-if ($debugging) echo "rggwnetcuyrtable default: $rggwnetcuyrtable \n";
-$rggwnetcuyrtable_arg = getargs (RGGWNETCUYRTABLE,$rggwnetcuyrtable);
-if ($debugging) echo "rggwnetcuyrtable_arg: $rggwnetcuyrtable_arg \n";
-if (strlen($rggwnetcuyrtable_arg=trim($rggwnetcuyrtable_arg))) {
-	$rggwnetcuyrtable = $rggwnetcuyrtable_arg;
+if ($debugging) echo "rgnetgwcuyrtable default: $rgnetgwcuyrtable \n";
+$rgnetgwcuyrtable_arg = getargs (RGNETGWCUYRTABLE,$rgnetgwcuyrtable);
+if ($debugging) echo "rgnetgwcuyrtable_arg: $rgnetgwcuyrtable_arg \n";
+if (strlen($rgnetgwcuyrtable_arg=trim($rgnetgwcuyrtable_arg))) {
+	$rgnetgwcuyrtable = $rgnetgwcuyrtable_arg;
 }
-if (strlen($rggwnetcuyrtable)) {
+if (strlen($rgnetgwcuyrtable)) {
 	// a potentially valid value, use it
-	if ($debugging) echo "final rggwnetcuyrtable: $rggwnetcuyrtable \n";
-	$options[RGGWNETCUYRTABLE] = $rggwnetcuyrtable;
+	if ($debugging) echo "final rgnetgwcuyrtable: $rgnetgwcuyrtable \n";
+	$options[RGNETGWCUYRTABLE] = $rgnetgwcuyrtable;
 } else {
 	// can not proceed without this
-	if ($logging) echo "missing rggwnetcuyrtable exiting \n";
-	if ($debugging) echo "missing rggwnetcuyrtable exiting \n";
+	if ($logging) echo "missing rgnetgwcuyrtable exiting \n";
+	if ($debugging) echo "missing rgnetgwcuyrtable exiting \n";
 	return;
 }
+/*
+ * get the rgperiodyrtable arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGPERIODYRTABLE,$options)) {
+	$rgperiodyrtable = trim($options[RGPERIODYRTABLE]);
+} else {
+	// we can NOT set a default for this
+	$rgperiodyrtable = ""; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgperiodyrtable default: $rgperiodyrtable \n";
+$rgperiodyrtable_arg = getargs (RGPERIODYRTABLE,$rgperiodyrtable);
+if ($debugging) echo "rgperiodyrtable_arg: $rgperiodyrtable_arg \n";
+if (strlen($rgperiodyrtable_arg=trim($rgperiodyrtable_arg))) {
+	$rgperiodyrtable = $rgperiodyrtable_arg;
+}
+if (strlen($rgperiodyrtable)) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgperiodyrtable: $rgperiodyrtable \n";
+	$options[RGPERIODYRTABLE] = $rgperiodyrtable;
+} else {
+	// can not proceed without this
+	if ($logging) echo "missing rgperiodyrtable exiting \n";
+	if ($debugging) echo "missing rgperiodyrtable exiting \n";
+	return;
+}
+/*
+ * get the rgpumpingyrtable arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGPUMPINGYRTABLE,$options)) {
+	$rgpumpingyrtable = trim($options[RGPUMPINGYRTABLE]);
+} else {
+	// we can NOT set a default for this
+	$rgpumpingyrtable = ""; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgpumpingyrtable default: $rgpumpingyrtable \n";
+$rgpumpingyrtable_arg = getargs (RGPUMPINGYRTABLE,$rgpumpingyrtable);
+if ($debugging) echo "rgpumpingyrtable_arg: $rgpumpingyrtable_arg \n";
+if (strlen($rgpumpingyrtable_arg=trim($rgpumpingyrtable_arg))) {
+	$rgpumpingyrtable = $rgpumpingyrtable_arg;
+}
+if (strlen($rgpumpingyrtable)) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgpumpingyrtable: $rgpumpingyrtable \n";
+	$options[RGPUMPINGYRTABLE] = $rgpumpingyrtable;
+} else {
+	// can not proceed without this
+	if ($logging) echo "missing rgpumpingyrtable exiting \n";
+	if ($debugging) echo "missing rgpumpingyrtable exiting \n";
+	return;
+}
+/*
+ * get the rgefficiencyyrtable arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGEFFICIENCYYRTABLE,$options)) {
+	$rgefficiencyyrtable = trim($options[RGEFFICIENCYYRTABLE]);
+} else {
+	// we can NOT set a default for this
+	$rgefficiencyyrtable = ""; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgefficiencyyrtable default: $rgefficiencyyrtable \n";
+$rgefficiencyyrtable_arg = getargs (RGEFFICIENCYYRTABLE,$rgefficiencyyrtable);
+if ($debugging) echo "rgefficiencyyrtable_arg: $rgefficiencyyrtable_arg \n";
+if (strlen($rgefficiencyyrtable_arg=trim($rgefficiencyyrtable_arg))) {
+	$rgefficiencyyrtable = $rgefficiencyyrtable_arg;
+}
+if (strlen($rgefficiencyyrtable)) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgefficiencyyrtable: $rgefficiencyyrtable \n";
+	$options[RGEFFICIENCYYRTABLE] = $rgefficiencyyrtable;
+} else {
+	// can not proceed without this
+	if ($logging) echo "missing rgefficiencyyrtable exiting \n";
+	if ($debugging) echo "missing rgefficiencyyrtable exiting \n";
+	return;
+}
+/*
+ * get the rgrechargeyrtable arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGRECHARGEYRTABLE,$options)) {
+	$rgrechargeyrtable = trim($options[RGRECHARGEYRTABLE]);
+} else {
+	// we can NOT set a default for this
+	$rgrechargeyrtable = ""; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgrechargeyrtable default: $rgrechargeyrtable \n";
+$rgrechargeyrtable_arg = getargs (RGRECHARGEYRTABLE,$rgrechargeyrtable);
+if ($debugging) echo "rgrechargeyrtable_arg: $rgrechargeyrtable_arg \n";
+if (strlen($rgrechargeyrtable_arg=trim($rgrechargeyrtable_arg))) {
+	$rgrechargeyrtable = $rgrechargeyrtable_arg;
+}
+if (strlen($rgrechargeyrtable)) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgrechargeyrtable: $rgrechargeyrtable \n";
+	$options[RGRECHARGEYRTABLE] = $rgrechargeyrtable;
+} else {
+	// can not proceed without this
+	if ($logging) echo "missing rgrechargeyrtable exiting \n";
+	if ($debugging) echo "missing rgrechargeyrtable exiting \n";
+	return;
+}
+
 
 /*
  * make the pg coonnection
@@ -420,16 +546,94 @@ if (!$pgconnection) {
 	return;
 }
 
-//set up the excitation array
+/*
+ * set up the excitation array
+ * first get the netgwcu values
+ *   typically these are the official annual total netgwcu values for this model version for the modeling period
+ *   (for example 6P98 this would be the netcu values from 1970 to 2010)
+ *   these already have the efficiency and decreed recharge built into them
+ * second get any additional pumping, pumping efficiency and recharge data for additional years beyond the modeling period
+ *   typically these are used for years post modeling period
+ *   (for example 6P98 this would be 2011 to current year)
+ * add them together and then constrain to the specified calculation period
+ *   note that by adding them together, this could also be used to modify netgwcu values during the modeling period
+ */
 //$excitation_array=array(2001=>5.0,2002=>10.0,2003=>0.0,2004=>15.0);
-$query = "SELECT nyear,netgwcutotal,gwrechargetotal";
-$query .= " FROM $rggwnetcuyrtable";
+$query = "SELECT nyear,value";
+$query .= " FROM $rgnetgwcuyrtable";
 $query .= " WHERE model_version=$rgmodelversion";
 $query .= " AND nzone=$rgresponsezone";
+$query .= " AND nscenario=$rgnetgwcuyrversion";
 $query .= " ORDER BY nyear ASC";
 $results = pg_query($pgconnection, $query);
 while ($row = pg_fetch_row($results)) {
-	$excitation_array[$row[0]] = $row[1]-$row[2];
+	$netgwcu_array[$row[0]] = $row[1];
+}
+//print_r($netgwcu_array);
+$query = "SELECT nyear,flood,sprinkler";
+$query .= " FROM $rgpumpingyrtable";
+$query .= " WHERE model_version=$rgmodelversion";
+$query .= " AND nzone=$rgresponsezone";
+$query .= " AND nscenario=$rgpumpingyrversion";
+$query .= " ORDER BY nyear ASC";
+$results = pg_query($pgconnection, $query);
+while ($row = pg_fetch_row($results)) {
+	$pumping_flood_array[$row[0]] = $row[1];
+	$pumping_sprinkler_array[$row[0]] = $row[2];
+}
+//print_r($pumping_flood_array);
+//print_r($pumping_sprinkler_array);
+$query = "SELECT nyear,flood,sprinkler";
+$query .= " FROM $rgefficiencyyrtable";
+$query .= " WHERE model_version=$rgmodelversion";
+$query .= " AND nzone=$rgresponsezone";
+$query .= " AND nscenario=$rgefficiencyyrversion";
+$query .= " ORDER BY nyear ASC";
+$results = pg_query($pgconnection, $query);
+while ($row = pg_fetch_row($results)) {
+	$efficiency_flood_array[$row[0]] = $row[1];
+	$efficiency_sprinkler_array[$row[0]] = $row[2];
+}
+//print_r($efficiency_flood_array);
+//print_r($efficiency_sprinkler_array);
+$query = "SELECT nyear,value";
+$query .= " FROM $rgrechargeyrtable";
+$query .= " WHERE model_version=$rgmodelversion";
+$query .= " AND nzone=$rgresponsezone";
+$query .= " AND nscenario=$rgrechargeyrversion";
+$query .= " ORDER BY nyear ASC";
+$results = pg_query($pgconnection, $query);
+while ($row = pg_fetch_row($results)) {
+	$recharge_array[$row[0]] = $row[1];
+}
+//print_r($recharge_array);
+$query = "SELECT startyear, endyear";
+$query .= " FROM $rgperiodyrtable";
+$query .= " WHERE model_version=$rgmodelversion";
+$query .= " AND nzone=$rgresponsezone";
+$query .= " AND nscenario=$rgperiodyrversion";
+$results = pg_query($pgconnection, $query);
+$period_array = array();
+while ($row = pg_fetch_row($results)) {
+	$startyear = $row[0];
+	$endyear = $row[1];
+}
+//print_r($period_array);
+$excitation_array = array();
+for ($year = $startyear; $year <= $endyear; $year++) {
+	$excitation_array[$year]=0.0;
+	if(array_key_exists($year,$netgwcu_array)) {
+		$excitation_array[$year] += $netgwcu_array[$year];
+	}
+	if(array_key_exists($year,$pumping_flood_array)&&array_key_exists($year,$efficiency_flood_array)) {
+		$excitation_array[$year] += $pumping_flood_array[$year]*$efficiency_flood_array[$year];
+	}
+	if(array_key_exists($year,$pumping_sprinkler_array)&&array_key_exists($year,$efficiency_sprinkler_array)) {
+		$excitation_array[$year] += $pumping_sprinkler_array[$year]*$efficiency_sprinkler_array[$year];
+	}
+	if(array_key_exists($year,$recharge_array)) {
+		$excitation_array[$year] -= $recharge_array[$year];
+	}
 }
 //print_r($excitation_array);
 

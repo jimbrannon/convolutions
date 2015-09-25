@@ -33,6 +33,7 @@ define("RGNETGWCUYRVERSION","rgnetgwcuyrversion");
 define("RGPUMPINGYRVERSION","rgpumpingyrversion");
 define("RGEFFICIENCYYRVERSION","rgefficiencyyrversion");
 define("RGRECHARGEYRVERSION","rgrechargeyrversion");
+define("RGCREDITMNVERSION","rgcreditmnversion");
 
 define("RGSUBTIMESTEPCOUNT","rgsubtimestepcount");
 
@@ -43,7 +44,7 @@ define("RGNETGWCUYRTABLE","rgnetgwcuyrtable"); //used to be RGGWNETCUYRTABLE
 define("RGPUMPINGYRTABLE","rgpumpingyrtable");
 define("RGEFFICIENCYYRTABLE","rgefficiencyyrtable");
 define("RGRECHARGEYRTABLE","rgrechargeyrtable");
-
+define("RGCREDITMNTABLE","rgcreditmntable");
 
 /*
  * argument defaults
@@ -79,6 +80,7 @@ $options[RGNETGWCUYRVERSION]=1; // 1 - the official netgwcu annual values for th
 $options[RGPUMPINGYRVERSION]=1; // 1 - the official annual well pumping total used in the ARP reports for this zone and for this model version
 $options[RGEFFICIENCYYRVERSION]=1; // 1 - the official annual well pumping efficiency values used in the ARP reports for this zone and for this model version
 $options[RGRECHARGEYRVERSION]=1; // 1 - the official annual decreed aquifer recharge values used in the ARP reports for this zone and for this model version
+$options[RGCREDITMNVERSION]=1; // 1 - 
 //$subtimestepcount
 $options[RGSUBTIMESTEPCOUNT]=12; // 12 would be the usual, years to months
 
@@ -89,6 +91,7 @@ $options[RGNETGWCUYRTABLE]="rg_response_zone_netgwcu_annual_data"; //used to be 
 $options[RGPUMPINGYRTABLE]="rg_response_zone_pumping_annual_data";
 $options[RGEFFICIENCYYRTABLE]="rg_response_zone_pumping_efficiency_annual_data";
 $options[RGRECHARGEYRTABLE]="rg_response_zone_recharge_annual_data";
+$options[RGCREDITMNTABLE]="rg_stream_depletion_credit_data";
 
 /*
  * handle the args right here in the wrapper
@@ -543,6 +546,32 @@ if ($rgrechargeyrversion > 0) {
 	return;
 }
 /*
+ * get the rg stream depletion credit monthly data version arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGCREDITMNVERSION,$options)) {
+	$rgcreditmnversion = $options[RGCREDITMNVERSION];
+} else {
+	// we can not set a default for this
+	$rgcreditmnversion = 0; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgcreditmnversion default: $rgcreditmnversion \n";
+$rgcreditmnversion_arg = getargs (RGCREDITMNVERSION,$rgcreditmnversion);
+if ($debugging) echo "rgcreditmnversion_arg: $rgcreditmnversion_arg \n";
+if (strlen($rgcreditmnversion_arg=trim($rgcreditmnversion_arg))) {
+	$rgcreditmnversion = intval($rgcreditmnversion_arg);
+}
+if ($rgcreditmnversion > 0) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgcreditmnversion: $rgcreditmnversion \n";
+	$options[RGCREDITMNVERSION] = $rgcreditmnversion;
+} else {
+	// can not proceed without this
+    if ($logging) echo "invalid rgcreditmnversion: $rgcreditmnversion exiting \n";
+	if ($debugging) echo "invalid rgcreditmnversion: $rgcreditmnversion exiting \n";
+	return;
+}
+/*
  * get the rg response zone arg
  * this is required, so bail if it is not set from either the default above or the cli arg
  */
@@ -803,6 +832,32 @@ if (strlen($rgrechargeyrtable)) {
 	if ($debugging) echo "missing rgrechargeyrtable exiting \n";
 	return;
 }
+/*
+ * get the rgcreditmntable arg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGCREDITMNTABLE,$options)) {
+	$rgcreditmntable = trim($options[RGCREDITMNTABLE]);
+} else {
+	// we can NOT set a default for this
+	$rgcreditmntable = ""; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgcreditmntable default: $rgcreditmntable \n";
+$rgcreditmntable_arg = getargs (RGCREDITMNTABLE,$rgcreditmntable);
+if ($debugging) echo "rgcreditmntable_arg: $rgcreditmntable_arg \n";
+if (strlen($rgcreditmntable_arg=trim($rgcreditmntable_arg))) {
+	$rgcreditmntable = $rgcreditmntable_arg;
+}
+if (strlen($rgcreditmntable)) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgcreditmntable: $rgcreditmntable \n";
+	$options[RGCREDITMNTABLE] = $rgcreditmntable;
+} else {
+	// can not proceed without this
+	if ($logging) echo "missing rgcreditmntable exiting \n";
+	if ($debugging) echo "missing rgcreditmntable exiting \n";
+	return;
+}
 
 /*
  * set up the excitation array
@@ -967,7 +1022,11 @@ if(count($results)) {
 	pg_delete($pgconnection,$rgstreamdepletiondatatable,$delete_array);
 	foreach ($results as $ndx=>$value) {
 		$insert_array['nscenario'] = $rgstreamdepletionscenario;
-		$insert_array['timestepindex'] = $ndx+($startyear-1900)*$subtimestepcount;
+		$absolutetimestep = $ndx+($startyear-1900)*$subtimestepcount;
+		$insert_array['timestepindex'] = $absolutetimestep;
+		if(array_key_exists($absolutetimestep,$credit_array)) {
+			$value += $credit_array[$absolutetimestep];
+		}
 		$insert_array['value'] = $value;
 		pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
 	}

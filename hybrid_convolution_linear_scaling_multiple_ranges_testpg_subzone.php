@@ -584,6 +584,7 @@ while ($row = pg_fetch_row($results)) {
 for ($i = 0; $i < $recordcount; $i++) {
 	//net gw cu
 	$excitation_array = array();
+	$subzone_array = array();
 	$excitation_array[$nyear[$i]]=$zone_netgwcu_af[$i];
 	$subzone_array[$nyear[$i]]=$subzone_netgwcu_af[$i];
 	$startyear = $nyear[$i];
@@ -646,6 +647,7 @@ for ($i = 0; $i < $recordcount; $i++) {
 		foreach ($results as $ndx=>$value) {
 			$insert_array['model_version']=$rgmodelversion;
 			$insert_array['nzone']=$rgresponsezone;
+			$insert_array['nsubzone']=$rgresponsesubzone;
 			$insert_array['nscenario']=$rgstreamdepletionscenario;
 			$insert_array['nreach']=$rgstreamreach;
 			$insert_array['nyear']=$startyear;

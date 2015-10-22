@@ -14,37 +14,22 @@ define("LOGGING","logging");
 
 define("PGUSER","pguser");
 define("PGPASSWORD","pgpassword");
-define("PGTABLE","pgtable");
 define("PGHOST","pghost");
 define("PGDB","pgdb");
 define("PGPORT","pgport");
 
-define("RGSTREAMDEPLETIONSCENARIO","rgstreamdepletionscenario");
-define("RGSTREAMDEPLETIONSCENARIOTABLE","rgstreamdepletionscenariotable");
-define("RGSTREAMDEPLETIONDATATABLE","rgstreamdepletiondatatable");
-
 define("RGMODELVERSION","rgmodelversion");
 define("RGRESPONSEZONE","rgresponsezone");
-define("RGSTREAMREACH","rgstreamreach");
-define("RGRESPFNVERSION","rgrespfnversion");
-
-define("RGPERIODYRVERSION","rgperiodyrversion");
-define("RGNETGWCUYRVERSION","rgnetgwcuyrversion");
-define("RGPUMPINGYRVERSION","rgpumpingyrversion");
-define("RGEFFICIENCYYRVERSION","rgefficiencyyrversion");
-define("RGRECHARGEYRVERSION","rgrechargeyrversion");
+define("RGSTREAMDEPLETIONSCENARIO","rgstreamdepletionscenario");
 define("RGCREDITMNVERSION","rgcreditmnversion");
-
 define("RGSUBTIMESTEPCOUNT","rgsubtimestepcount");
 
+define("RGSTREAMDEPLETIONSCENARIOTABLE","rgstreamdepletionscenariotable");
+define("RGSTREAMDEPLETIONDATATABLE","rgstreamdepletiondatatable");
+define("RGCREDITMNTABLE","rgcreditmntable");
 define("RGRESPFNFTABLE","rgrespfntable");
 define("RGRESPFNDATATABLE","rgrespfndatatable");
-define("RGPERIODYRTABLE","rgperiodyrtable");
-define("RGNETGWCUYRTABLE","rgnetgwcuyrtable"); //used to be RGGWNETCUYRTABLE
-define("RGPUMPINGYRTABLE","rgpumpingyrtable");
-define("RGEFFICIENCYYRTABLE","rgefficiencyyrtable");
-define("RGRECHARGEYRTABLE","rgrechargeyrtable");
-define("RGCREDITMNTABLE","rgcreditmntable");
+
 
 /*
  * argument defaults
@@ -62,35 +47,15 @@ $options[PGDB]="d7dev";
 $options[PGHOST]="localhost";
 $options[PGPORT]=5432;
 
-$options[RGSTREAMDEPLETIONSCENARIO]=2; // 1 is 6P97 official data, 1970-2015, 2 is 6P98
-$options[RGSTREAMDEPLETIONSCENARIOTABLE]="rg_stream_depletion_scenarios";
-$options[RGSTREAMDEPLETIONDATATABLE]="rg_stream_depletion_data";
-
-/*
- * setting these no longer has any effect these,
- * since they get over-written with the values in the stream depletion scenario table
- * but if somehow that fails (unlikely to be allowed), it would fall back to these as defaults
- */
-$options[RGMODELVERSION]=5; // 4 is 6P97, 5 is 6P98
+$options[RGMODELVERSION]=6; // 4 is 6P97, 5 is 6P98, 6 is 6P98final
 $options[RGRESPONSEZONE]=1; // 1 is SD1 confined gw, 2 is SD2 alluvial gw, 3 is Conejos, etc.
-$options[RGSTREAMREACH]=1; // 1 is RG1 (del norte to excelsior), 2 is RG2 (excelsior to chicago), etc.
-$options[RGRESPFNVERSION]=1; // 1 would be the usual, the officially released one from DWR, unless there happen to multiple versions in the database
-$options[RGPERIODYRVERSION]=1; // 0 - all the years in the input data, 1 - modeled period (for example 1970-2010 for 6P98), 2 - 1970-2015
-$options[RGNETGWCUYRVERSION]=1; // 1 - the official netgwcu annual values for the model version (used in the response function calibration)
-$options[RGPUMPINGYRVERSION]=1; // 1 - the official annual well pumping total used in the ARP reports for this zone and for this model version
-$options[RGEFFICIENCYYRVERSION]=1; // 1 - the official annual well pumping efficiency values used in the ARP reports for this zone and for this model version
-$options[RGRECHARGEYRVERSION]=1; // 1 - the official annual decreed aquifer recharge values used in the ARP reports for this zone and for this model version
+$options[RGSTREAMDEPLETIONSCENARIO]=1; // 1 model period data, 2 is ARP 2015 period, etc.
 $options[RGCREDITMNVERSION]=1; // 1 - 
-//$subtimestepcount
 $options[RGSUBTIMESTEPCOUNT]=12; // 12 would be the usual, years to months
-
-$options[RGRESPFNFTABLE]="rg_response_functions";
-$options[RGRESPFNDATATABLE]="rg_response_function_data";
-$options[RGPERIODYRTABLE]="rg_response_zone_period_annual_scenarios";
-$options[RGNETGWCUYRTABLE]="rg_response_zone_netgwcu_annual_data"; //used to be RGGWNETCUYRTABLE
-$options[RGPUMPINGYRTABLE]="rg_response_zone_pumping_annual_data";
-$options[RGEFFICIENCYYRTABLE]="rg_response_zone_pumping_efficiency_annual_data";
-$options[RGRECHARGEYRTABLE]="rg_response_zone_recharge_annual_data";
+$options[RGSTREAMDEPLETIONSCENARIOTABLE]="rg_zone_stream_depletion_input_data_annual";
+$options[RGSTREAMDEPLETIONDATATABLE]="rg_zone_stream_depletion_output_data";
+$options[RGRESPFNFTABLE]="rg_response_functions_linear";
+$options[RGRESPFNDATATABLE]="rg_response_functions_linear_data";
 $options[RGCREDITMNTABLE]="rg_stream_depletion_credit_data";
 
 /*
@@ -352,40 +317,6 @@ if (!$pgconnection) {
 }
 
 /*
- * get the stream depletion scenario parameters
- *   these essentially become the defaults,
- *     but it is unlikely anyone (except me...)
- *     will input separate parameters to over-ride them
- *     because it will still get written to the output table
- *     using the $rgstreamdepletionscenario value
- */
-$query = "SELECT ";
-$query .= "model_version,";
-$query .= "nzone,";
-$query .= "nperiodyrscenario,";
-$query .= "nnetgwcuyrscenario,";
-$query .= "npumpingyrscenario,";
-$query .= "nefficiencyyrscenario,";
-$query .= "nrechargeyrscenario,";
-$query .= "nreach,";
-$query .= "nrspfn ";
-$query .= " FROM $rgstreamdepletionscenariotable";
-$query .= " WHERE ndx=$rgstreamdepletionscenario";
-$results = pg_query($pgconnection, $query);
-while ($row = pg_fetch_row($results)) {
-    if($debugging) print_r($row);
-	$options[RGMODELVERSION] = $row[0]; 
-	$options[RGRESPONSEZONE] = $row[1]; 
-	$options[RGPERIODYRVERSION] = $row[2]; 
-	$options[RGNETGWCUYRVERSION] = $row[3]; 
-	$options[RGPUMPINGYRVERSION] = $row[4]; 
-	$options[RGEFFICIENCYYRVERSION] = $row[5]; 
-	$options[RGRECHARGEYRVERSION] = $row[6]; 
-	$options[RGSTREAMREACH] = $row[7]; 
-	$options[RGRESPFNVERSION] = $row[8]; 
-}
-if($debugging) print_r($options);
-/*
  * now get the rest of the args
  */
 
@@ -413,136 +344,6 @@ if ($rgmodelversion > 0) {
 	// can not proceed without this
     if ($logging) echo "invalid rgmodelversion: $rgmodelversion exiting \n";
 	if ($debugging) echo "invalid rgmodelversion: $rgmodelversion exiting \n";
-	return;
-}
-/*
- * get the rg period data (years) version arg
- * this is required, so bail if it is not set from either the default above or the cli arg
- */
-if (array_key_exists(RGPERIODYRVERSION,$options)) {
-	$rgperiodyrversion = $options[RGPERIODYRVERSION];
-} else {
-	// we can not set a default for this
-	$rgperiodyrversion = 0; // set it to an invalid value and check later
-}
-if ($debugging) echo "rgperiodyrversion default: $rgperiodyrversion \n";
-$rgperiodyrversion_arg = getargs (RGPERIODYRVERSION,$rgperiodyrversion);
-if ($debugging) echo "rgperiodyrversion_arg: $rgperiodyrversion_arg \n";
-if (strlen($rgperiodyrversion_arg=trim($rgperiodyrversion_arg))) {
-	$rgperiodyrversion = intval($rgperiodyrversion_arg);
-}
-if ($rgperiodyrversion > 0) {
-	// a potentially valid value, use it
-	if ($debugging) echo "final rgperiodyrversion: $rgperiodyrversion \n";
-	$options[RGPERIODYRVERSION] = $rgperiodyrversion;
-} else {
-	// can not proceed without this
-    if ($logging) echo "invalid rgperiodyrversion: $rgperiodyrversion exiting \n";
-	if ($debugging) echo "invalid rgperiodyrversion: $rgperiodyrversion exiting \n";
-	return;
-}
-/*
- * get the rg netgwcu annual data version arg
- * this is required, so bail if it is not set from either the default above or the cli arg
- */
-if (array_key_exists(RGNETGWCUYRVERSION,$options)) {
-	$rgnetgwcuyrversion = $options[RGNETGWCUYRVERSION];
-} else {
-	// we can not set a default for this
-	$rgnetgwcuyrversion = 0; // set it to an invalid value and check later
-}
-if ($debugging) echo "rgnetgwcuyrversion default: $rgnetgwcuyrversion \n";
-$rgnetgwcuyrversion_arg = getargs (RGNETGWCUYRVERSION,$rgnetgwcuyrversion);
-if ($debugging) echo "rgnetgwcuyrversion_arg: $rgnetgwcuyrversion_arg \n";
-if (strlen($rgnetgwcuyrversion_arg=trim($rgnetgwcuyrversion_arg))) {
-	$rgnetgwcuyrversion = intval($rgnetgwcuyrversion_arg);
-}
-if ($rgnetgwcuyrversion > 0) {
-	// a potentially valid value, use it
-	if ($debugging) echo "final rgnetgwcuyrversion: $rgnetgwcuyrversion \n";
-	$options[RGNETGWCUYRVERSION] = $rgnetgwcuyrversion;
-} else {
-	// can not proceed without this
-    if ($logging) echo "invalid rgnetgwcuyrversion: $rgnetgwcuyrversion exiting \n";
-	if ($debugging) echo "invalid rgnetgwcuyrversion: $rgnetgwcuyrversion exiting \n";
-	return;
-}
-/*
- * get the rg pumping annual data version arg
- * this is required, so bail if it is not set from either the default above or the cli arg
- */
-if (array_key_exists(RGPUMPINGYRVERSION,$options)) {
-	$rgpumpingyrversion = $options[RGPUMPINGYRVERSION];
-} else {
-	// we can not set a default for this
-	$rgpumpingyrversion = 0; // set it to an invalid value and check later
-}
-if ($debugging) echo "rgpumpingyrversion default: $rgpumpingyrversion \n";
-$rgpumpingyrversion_arg = getargs (RGPUMPINGYRVERSION,$rgpumpingyrversion);
-if ($debugging) echo "rgpumpingyrversion_arg: $rgpumpingyrversion_arg \n";
-if (strlen($rgpumpingyrversion_arg=trim($rgpumpingyrversion_arg))) {
-	$rgpumpingyrversion = intval($rgpumpingyrversion_arg);
-}
-if ($rgpumpingyrversion > 0) {
-	// a potentially valid value, use it
-	if ($debugging) echo "final rgpumpingyrversion: $rgpumpingyrversion \n";
-	$options[RGPUMPINGYRVERSION] = $rgpumpingyrversion;
-} else {
-	// can not proceed without this
-    if ($logging) echo "invalid rgpumpingyrversion: $rgpumpingyrversion exiting \n";
-	if ($debugging) echo "invalid rgpumpingyrversion: $rgpumpingyrversion exiting \n";
-	return;
-}
-/*
- * get the rg pumping efficiency annual data version arg
- * this is required, so bail if it is not set from either the default above or the cli arg
- */
-if (array_key_exists(RGEFFICIENCYYRVERSION,$options)) {
-	$rgefficiencyyrversion = $options[RGEFFICIENCYYRVERSION];
-} else {
-	// we can not set a default for this
-	$rgefficiencyyrversion = 0; // set it to an invalid value and check later
-}
-if ($debugging) echo "rgefficiencyyrversion default: $rgefficiencyyrversion \n";
-$rgefficiencyyrversion_arg = getargs (RGEFFICIENCYYRVERSION,$rgefficiencyyrversion);
-if ($debugging) echo "rgefficiencyyrversion_arg: $rgefficiencyyrversion_arg \n";
-if (strlen($rgefficiencyyrversion_arg=trim($rgefficiencyyrversion_arg))) {
-	$rgefficiencyyrversion = intval($rgefficiencyyrversion_arg);
-}
-if ($rgefficiencyyrversion > 0) {
-	// a potentially valid value, use it
-	if ($debugging) echo "final rgefficiencyyrversion: $rgefficiencyyrversion \n";
-	$options[RGEFFICIENCYYRVERSION] = $rgefficiencyyrversion;
-} else {
-	// can not proceed without this
-    if ($logging) echo "invalid rgefficiencyyrversion: $rgefficiencyyrversion exiting \n";
-	if ($debugging) echo "invalid rgefficiencyyrversion: $rgefficiencyyrversion exiting \n";
-	return;
-}
-/*
- * get the rg recharge annual data version arg
- * this is required, so bail if it is not set from either the default above or the cli arg
- */
-if (array_key_exists(RGRECHARGEYRVERSION,$options)) {
-	$rgrechargeyrversion = $options[RGRECHARGEYRVERSION];
-} else {
-	// we can not set a default for this
-	$rgrechargeyrversion = 0; // set it to an invalid value and check later
-}
-if ($debugging) echo "rgrechargeyrversion default: $rgrechargeyrversion \n";
-$rgrechargeyrversion_arg = getargs (RGRECHARGEYRVERSION,$rgrechargeyrversion);
-if ($debugging) echo "rgrechargeyrversion_arg: $rgrechargeyrversion_arg \n";
-if (strlen($rgrechargeyrversion_arg=trim($rgrechargeyrversion_arg))) {
-	$rgrechargeyrversion = intval($rgrechargeyrversion_arg);
-}
-if ($rgrechargeyrversion > 0) {
-	// a potentially valid value, use it
-	if ($debugging) echo "final rgrechargeyrversion: $rgrechargeyrversion \n";
-	$options[RGRECHARGEYRVERSION] = $rgrechargeyrversion;
-} else {
-	// can not proceed without this
-    if ($logging) echo "invalid rgrechargeyrversion: $rgrechargeyrversion exiting \n";
-	if ($debugging) echo "invalid rgrechargeyrversion: $rgrechargeyrversion exiting \n";
 	return;
 }
 /*
@@ -595,58 +396,6 @@ if ($rgresponsezone > 0) {
 	// can not proceed without this
 	if ($logging) echo "invalid rgresponsezone: $rgresponsezone exiting \n";
 	if ($debugging) echo "invalid rgresponsezone: $rgresponsezone exiting \n";
-	return;
-}
-/*
- * get the rg stream reach arg
- * this is required, so bail if it is not set from either the default above or the cli arg
- */
-if (array_key_exists(RGSTREAMREACH,$options)) {
-	$rgstreamreach = $options[RGSTREAMREACH];
-} else {
-	// we can not set a default for this
-	$rgstreamreach = 0; // set it to an invalid value and check later
-}
-if ($debugging) echo "rgstreamreach default: $rgstreamreach \n";
-$rgstreamreach_arg = getargs (RGSTREAMREACH,$rgstreamreach);
-if ($debugging) echo "rgstreamreach_arg: $rgstreamreach_arg \n";
-if (strlen($rgstreamreach_arg=trim($rgstreamreach_arg))) {
-	$rgstreamreach = intval($rgstreamreach_arg);
-}
-if ($rgstreamreach > 0) {
-	// a potentially valid value, use it
-	if ($debugging) echo "final rgstreamreach: $rgstreamreach \n";
-	$options[RGSTREAMREACH] = $rgstreamreach;
-} else {
-	// can not proceed without this
-	if ($logging) echo "invalid rgstreamreach: $rgstreamreach exiting \n";
-	if ($debugging) echo "invalid rgstreamreach: $rgstreamreach exiting \n";
-	return;
-}
-/*
- * get the rg response function version arg
- * this is required, so bail if it is not set from either the default above or the cli arg
- */
-if (array_key_exists(RGRESPFNVERSION,$options)) {
-	$rgrespfnversion = $options[RGRESPFNVERSION];
-} else {
-	// we can (with trepidation) set a default for this
-	$rgrespfnversion = 1;
-}
-if ($debugging) echo "rgrespfnversion default: $rgrespfnversion \n";
-$rgrespfnversion_arg = getargs (RGRESPFNVERSION,$rgrespfnversion);
-if ($debugging) echo "rgrespfnversion_arg: $rgrespfnversion_arg \n";
-if (strlen($rgrespfnversion_arg=trim($rgrespfnversion_arg))) {
-	$rgrespfnversion = intval($rgrespfnversion_arg);
-}
-if ($rgrespfnversion > 0) {
-	// a potentially valid value, use it
-	if ($debugging) echo "final rgrespfnversion: $rgrespfnversion \n";
-	$options[RGRESPFNVERSION] = $rgrespfnversion;
-} else {
-	// can not proceed without this
-	if ($logging) echo "invalid rgrespfnversion: $rgrespfnversion exiting \n";
-	if ($debugging) echo "invalid rgrespfnversion: $rgrespfnversion exiting \n";
 	return;
 }
 
@@ -703,136 +452,6 @@ if (strlen($rgrespfndatatable)) {
 	return;
 }
 /*
- * get the rgnetgwcuyrtable arg
- * this is required, so bail if it is not set from either the default above or the cli arg
- */
-if (array_key_exists(RGNETGWCUYRTABLE,$options)) {
-	$rgnetgwcuyrtable = trim($options[RGNETGWCUYRTABLE]);
-} else {
-	// we can NOT set a default for this
-	$rgnetgwcuyrtable = ""; // set it to an invalid value and check later
-}
-if ($debugging) echo "rgnetgwcuyrtable default: $rgnetgwcuyrtable \n";
-$rgnetgwcuyrtable_arg = getargs (RGNETGWCUYRTABLE,$rgnetgwcuyrtable);
-if ($debugging) echo "rgnetgwcuyrtable_arg: $rgnetgwcuyrtable_arg \n";
-if (strlen($rgnetgwcuyrtable_arg=trim($rgnetgwcuyrtable_arg))) {
-	$rgnetgwcuyrtable = $rgnetgwcuyrtable_arg;
-}
-if (strlen($rgnetgwcuyrtable)) {
-	// a potentially valid value, use it
-	if ($debugging) echo "final rgnetgwcuyrtable: $rgnetgwcuyrtable \n";
-	$options[RGNETGWCUYRTABLE] = $rgnetgwcuyrtable;
-} else {
-	// can not proceed without this
-	if ($logging) echo "missing rgnetgwcuyrtable exiting \n";
-	if ($debugging) echo "missing rgnetgwcuyrtable exiting \n";
-	return;
-}
-/*
- * get the rgperiodyrtable arg
- * this is required, so bail if it is not set from either the default above or the cli arg
- */
-if (array_key_exists(RGPERIODYRTABLE,$options)) {
-	$rgperiodyrtable = trim($options[RGPERIODYRTABLE]);
-} else {
-	// we can NOT set a default for this
-	$rgperiodyrtable = ""; // set it to an invalid value and check later
-}
-if ($debugging) echo "rgperiodyrtable default: $rgperiodyrtable \n";
-$rgperiodyrtable_arg = getargs (RGPERIODYRTABLE,$rgperiodyrtable);
-if ($debugging) echo "rgperiodyrtable_arg: $rgperiodyrtable_arg \n";
-if (strlen($rgperiodyrtable_arg=trim($rgperiodyrtable_arg))) {
-	$rgperiodyrtable = $rgperiodyrtable_arg;
-}
-if (strlen($rgperiodyrtable)) {
-	// a potentially valid value, use it
-	if ($debugging) echo "final rgperiodyrtable: $rgperiodyrtable \n";
-	$options[RGPERIODYRTABLE] = $rgperiodyrtable;
-} else {
-	// can not proceed without this
-	if ($logging) echo "missing rgperiodyrtable exiting \n";
-	if ($debugging) echo "missing rgperiodyrtable exiting \n";
-	return;
-}
-/*
- * get the rgpumpingyrtable arg
- * this is required, so bail if it is not set from either the default above or the cli arg
- */
-if (array_key_exists(RGPUMPINGYRTABLE,$options)) {
-	$rgpumpingyrtable = trim($options[RGPUMPINGYRTABLE]);
-} else {
-	// we can NOT set a default for this
-	$rgpumpingyrtable = ""; // set it to an invalid value and check later
-}
-if ($debugging) echo "rgpumpingyrtable default: $rgpumpingyrtable \n";
-$rgpumpingyrtable_arg = getargs (RGPUMPINGYRTABLE,$rgpumpingyrtable);
-if ($debugging) echo "rgpumpingyrtable_arg: $rgpumpingyrtable_arg \n";
-if (strlen($rgpumpingyrtable_arg=trim($rgpumpingyrtable_arg))) {
-	$rgpumpingyrtable = $rgpumpingyrtable_arg;
-}
-if (strlen($rgpumpingyrtable)) {
-	// a potentially valid value, use it
-	if ($debugging) echo "final rgpumpingyrtable: $rgpumpingyrtable \n";
-	$options[RGPUMPINGYRTABLE] = $rgpumpingyrtable;
-} else {
-	// can not proceed without this
-	if ($logging) echo "missing rgpumpingyrtable exiting \n";
-	if ($debugging) echo "missing rgpumpingyrtable exiting \n";
-	return;
-}
-/*
- * get the rgefficiencyyrtable arg
- * this is required, so bail if it is not set from either the default above or the cli arg
- */
-if (array_key_exists(RGEFFICIENCYYRTABLE,$options)) {
-	$rgefficiencyyrtable = trim($options[RGEFFICIENCYYRTABLE]);
-} else {
-	// we can NOT set a default for this
-	$rgefficiencyyrtable = ""; // set it to an invalid value and check later
-}
-if ($debugging) echo "rgefficiencyyrtable default: $rgefficiencyyrtable \n";
-$rgefficiencyyrtable_arg = getargs (RGEFFICIENCYYRTABLE,$rgefficiencyyrtable);
-if ($debugging) echo "rgefficiencyyrtable_arg: $rgefficiencyyrtable_arg \n";
-if (strlen($rgefficiencyyrtable_arg=trim($rgefficiencyyrtable_arg))) {
-	$rgefficiencyyrtable = $rgefficiencyyrtable_arg;
-}
-if (strlen($rgefficiencyyrtable)) {
-	// a potentially valid value, use it
-	if ($debugging) echo "final rgefficiencyyrtable: $rgefficiencyyrtable \n";
-	$options[RGEFFICIENCYYRTABLE] = $rgefficiencyyrtable;
-} else {
-	// can not proceed without this
-	if ($logging) echo "missing rgefficiencyyrtable exiting \n";
-	if ($debugging) echo "missing rgefficiencyyrtable exiting \n";
-	return;
-}
-/*
- * get the rgrechargeyrtable arg
- * this is required, so bail if it is not set from either the default above or the cli arg
- */
-if (array_key_exists(RGRECHARGEYRTABLE,$options)) {
-	$rgrechargeyrtable = trim($options[RGRECHARGEYRTABLE]);
-} else {
-	// we can NOT set a default for this
-	$rgrechargeyrtable = ""; // set it to an invalid value and check later
-}
-if ($debugging) echo "rgrechargeyrtable default: $rgrechargeyrtable \n";
-$rgrechargeyrtable_arg = getargs (RGRECHARGEYRTABLE,$rgrechargeyrtable);
-if ($debugging) echo "rgrechargeyrtable_arg: $rgrechargeyrtable_arg \n";
-if (strlen($rgrechargeyrtable_arg=trim($rgrechargeyrtable_arg))) {
-	$rgrechargeyrtable = $rgrechargeyrtable_arg;
-}
-if (strlen($rgrechargeyrtable)) {
-	// a potentially valid value, use it
-	if ($debugging) echo "final rgrechargeyrtable: $rgrechargeyrtable \n";
-	$options[RGRECHARGEYRTABLE] = $rgrechargeyrtable;
-} else {
-	// can not proceed without this
-	if ($logging) echo "missing rgrechargeyrtable exiting \n";
-	if ($debugging) echo "missing rgrechargeyrtable exiting \n";
-	return;
-}
-/*
  * get the rgcreditmntable arg
  * this is required, so bail if it is not set from either the default above or the cli arg
  */
@@ -861,176 +480,146 @@ if (strlen($rgcreditmntable)) {
 
 /*
  * set up the excitation array
- * first get the netgwcu values
- *   typically these are the official annual total netgwcu values for this model version for the modeling period
- *   (for example 6P98 this would be the netcu values from 1970 to 2010)
- *   these already have the efficiency and decreed recharge built into them
- * second get any additional pumping, pumping efficiency and recharge data for additional years beyond the modeling period
- *   typically these are used for years post modeling period
- *   (for example 6P98 this would be 2011 to current year)
- * add them together and then constrain to the specified calculation period
- *   note that by adding them together, this could also be used to modify netgwcu values during the modeling period
+ * get the all the necessary data from the zone's stream depletion input data records for this "scenario"
+ * these will include annual netgwcu values to be calculated from the annual gwcu and recharge values
+ * (keeping them separate in the data is important for subzone calculations)
+ * the year range and impacted stream reaches and most other data can be determined from
+ *   the zone's stream depletion input data records for this "scenario"
+ * each record represents one response function application
+ *   in other words, each record will be used to create a time series of stream depletions (usually 20 years long)
+ *   these stream depletions will be saved separately in the pg database to be aggregated later via queries
+ *   to create exactly the reposne that the user desires (without having to reconvolute the same data over and over)   
  */
 //$excitation_array=array(2001=>5.0,2002=>10.0,2003=>0.0,2004=>15.0);
-$query = "SELECT nyear,value";
-$query .= " FROM $rgnetgwcuyrtable";
-$query .= " WHERE model_version=$rgmodelversion";
-$query .= " AND nzone=$rgresponsezone";
-$query .= " AND nscenario=$rgnetgwcuyrversion";
-$query .= " ORDER BY nyear ASC";
-$results = pg_query($pgconnection, $query);
-while ($row = pg_fetch_row($results)) {
-	$netgwcu_array[$row[0]] = $row[1];
-}
-//print_r($netgwcu_array);
-$query = "SELECT nyear,flood,sprinkler";
-$query .= " FROM $rgpumpingyrtable";
-$query .= " WHERE model_version=$rgmodelversion";
-$query .= " AND nzone=$rgresponsezone";
-$query .= " AND nscenario=$rgpumpingyrversion";
-$query .= " ORDER BY nyear ASC";
-$results = pg_query($pgconnection, $query);
-while ($row = pg_fetch_row($results)) {
-	$pumping_flood_array[$row[0]] = $row[1];
-	$pumping_sprinkler_array[$row[0]] = $row[2];
-}
-//print_r($pumping_flood_array);
-//print_r($pumping_sprinkler_array);
-$query = "SELECT nyear,flood,sprinkler";
-$query .= " FROM $rgefficiencyyrtable";
-$query .= " WHERE model_version=$rgmodelversion";
-$query .= " AND nzone=$rgresponsezone";
-$query .= " AND nscenario=$rgefficiencyyrversion";
-$query .= " ORDER BY nyear ASC";
-$results = pg_query($pgconnection, $query);
-while ($row = pg_fetch_row($results)) {
-	$efficiency_flood_array[$row[0]] = $row[1];
-	$efficiency_sprinkler_array[$row[0]] = $row[2];
-}
-//print_r($efficiency_flood_array);
-//print_r($efficiency_sprinkler_array);
-$query = "SELECT nyear,value";
-$query .= " FROM $rgrechargeyrtable";
-$query .= " WHERE model_version=$rgmodelversion";
-$query .= " AND nzone=$rgresponsezone";
-$query .= " AND nscenario=$rgrechargeyrversion";
-$query .= " ORDER BY nyear ASC";
-$results = pg_query($pgconnection, $query);
-while ($row = pg_fetch_row($results)) {
-	$recharge_array[$row[0]] = $row[1];
-}
-//print_r($recharge_array);
-$query = "SELECT startyear, endyear";
-$query .= " FROM $rgperiodyrtable";
-$query .= " WHERE model_version=$rgmodelversion";
-$query .= " AND nzone=$rgresponsezone";
-$query .= " AND nscenario=$rgperiodyrversion";
-$results = pg_query($pgconnection, $query);
-$period_array = array();
-while ($row = pg_fetch_row($results)) {
-	$startyear = $row[0];
-	$endyear = $row[1];
-}
-//print_r($period_array);
-$excitation_array = array();
-for ($year = $startyear; $year <= $endyear; $year++) {
-	$excitation_array[$year]=0.0;
-	if(array_key_exists($year,$netgwcu_array)) {
-		$excitation_array[$year] += $netgwcu_array[$year];
-	}
-	if(array_key_exists($year,$pumping_flood_array)&&array_key_exists($year,$efficiency_flood_array)) {
-		$excitation_array[$year] += $pumping_flood_array[$year]*$efficiency_flood_array[$year];
-	}
-	if(array_key_exists($year,$pumping_sprinkler_array)&&array_key_exists($year,$efficiency_sprinkler_array)) {
-		$excitation_array[$year] += $pumping_sprinkler_array[$year]*$efficiency_sprinkler_array[$year];
-	}
-	if(array_key_exists($year,$recharge_array)) {
-		$excitation_array[$year] -= $recharge_array[$year];
-	}
-}
-//print_r($excitation_array);
 
-//range definitions and linear scaling lines for each range
-//$linex = 5.0;
-//$liney = 100.0;
-//$slope = 10.0;
-$xrange_ndx_array = array();
-$xrange_array = array();
-$linex_array = array();
-$liney_array = array();
-$lineslope_array = array();
-$pgtable = "rg_response_functions";
-$query = "SELECT xrange_ndx,xrange_min,xrange_max,line_xval,line_yval,line_slope FROM $rgrespfntable";
+// clear out the previous data for this stream depletion scenario
+$delete_array['model_version']=$rgmodelversion;
+$delete_array['nzone']=$rgresponsezone;
+$delete_array['nscenario']=$rgstreamdepletionscenario;
+pg_delete($pgconnection,$rgstreamdepletiondatatable,$delete_array);
+// subtimestep
+$subtimestepcount=$options[RGSUBTIMESTEPCOUNT];
+// get the str depl scenario records
+$query = "SELECT model_version, nzone, nreach, nscenario, nyear,";
+$query .= " zone_gwcu_af, zone_recharge_af, streamflow_aprsep_af,"
+$query .= " grouping_type, streamflow_avg_af, resp_fn_type, resp_fn_ndx";
+$query .= " FROM $rgstreamdepletionscenariotable";
 $query .= " WHERE model_version=$rgmodelversion";
 $query .= " AND nzone=$rgresponsezone";
-$query .= " AND nreach=$rgstreamreach";
-$query .= " AND nrspfn=$rgrespfnversion";
-$query .= " ORDER BY xrange_ndx ASC";
+$query .= " AND nscenario=$rgstreamdepletionscenario";
+$query .= " ORDER BY nyear, nreach";
 $results = pg_query($pgconnection, $query);
-$xrange_ndx_count=0;
+$recordcount=0;
+$model_version=array();
+$nzone=array();
+$nreach=array();
+$nscenario=array();
+$nyear=array();
+$zone_gwcu_af=array();
+$zone_recharge_af=array();
+$zone_netgwcu_af=array();
+$streamflow_aprsep_af=array();
+$grouping_type=array();
+$streamflow_avg_af=array();
+$resp_fn_type=array();
+$resp_fn_ndx=array();
+// loop through the records and save the values into arrays
 while ($row = pg_fetch_row($results)) {
-	++$xrange_ndx_count;
-	$xrange_ndx_array[$xrange_ndx_count] = $row[0];
-	$xrange_array[$xrange_ndx_count] = array($row[1],$row[2]);
-	$linex_array[$xrange_ndx_count] = $row[3];
-	$liney_array[$xrange_ndx_count] = $row[4];
-	// note that the rgdss slope has been normalized,
-	//   so cpnvert it back to a standard slope
-	$lineslope_array[$xrange_ndx_count] = $row[4]*$row[5];
+	$model_version[$recordcount]=$row[0];
+	$nzone[$recordcount]=$row[1];
+	$nreach[$recordcount]=$row[2];
+	$nscenario[$recordcount]=$row[3];
+	$nyear[$recordcount]=$row[4];
+	$zone_gwcu_af[$recordcount]=$row[5];
+	$zone_recharge_af[$recordcount]=$row[6];
+	$zone_netgwcu_af[$recordcount]=$row[5]-$row[6];
+	$streamflow_aprsep_af[$recordcount]=$row[7];
+	$grouping_type[$recordcount]=$row[8];
+	$streamflow_avg_af[$recordcount]=$row[8];
+	$resp_fn_type[$recordcount]=$row[10];
+	$resp_fn_ndx[$recordcount]=$row[11];
+	++$recordcount;
+	//$netgwcu_array[$row[0]] = $row[1];
 }
-
-
-// response functions for each range using range definitions from above
-//$response_array=array(1=>5.0,2=>10.0,3=>15.0,4=>30.0,5=>25.0,6=>15.0);
-$response_arrays=array();
-for ($ndx = 1; $ndx < $xrange_ndx_count+1; $ndx++) {
-	$response_array=array();
-	$rgxrange_ndx = $xrange_ndx_array[$ndx];
-	$query = "SELECT timestep,rspfnvalue FROM $rgrespfndatatable";
+// loop through the arrays and create a stream depletion time series for each using the response functions
+// even though the convolution routine can handle a time series of excitations,
+//   instead run each year and stream reach separately so they can be saved separately
+for ($i = 0; $i < $recordcount; $i++) {
+	//net gw cu
+	$excitation_array = array();
+	$excitation_array[$nyear[$i]]=$zone_netgwcu_af[$i];
+	$startyear = $nyear[$i];
+	//range definitions and linear scaling lines for each range
+	$xrange_ndx_array = array();
+	$xrange_array = array();
+	$linex_array = array();
+	$liney_array = array();
+	$lineslope_array = array();
+	$rgstreamreach=$nreach[$i];
+	$rgrespfnversion=$resp_fn_ndx[$i];
+	$query = "SELECT group_ndx,group_min,group_max,line_xval,line_yval,line_slope FROM $rgrespfntable";
 	$query .= " WHERE model_version=$rgmodelversion";
 	$query .= " AND nzone=$rgresponsezone";
 	$query .= " AND nreach=$rgstreamreach";
 	$query .= " AND nrspfn=$rgrespfnversion";
-	$query .= " AND xrange_ndx=$rgxrange_ndx";
-	$query .= " ORDER BY timestep ASC"; 
+	$query .= " ORDER BY group_ndx ASC";
 	$results = pg_query($pgconnection, $query);
+	$xrange_ndx_count=0;
 	while ($row = pg_fetch_row($results)) {
-		$response_array[$row[0]] = $row[1];
-	}
-	$response_arrays[$ndx]=$response_array;
-}
-//print_r($response_arrays);
-
-// subtimestep
-$subtimestepcount=$options[RGSUBTIMESTEPCOUNT];
-
-//print_r($linex_array);
-//print_r($liney_array);
-//print_r($lineslope_array);
-//print_r($xrange_array);
-$results = hybrid_convolution_linear_scaling_multiple_ranges(
-				$excitation_array,
-				$response_arrays,
-				$subtimestepcount,
-				$linex_array,
-				$liney_array,
-				$lineslope_array,
-				$xrange_array);
-
-if(count($results)) {
-	$delete_array['nscenario']=$rgstreamdepletionscenario;
-	pg_delete($pgconnection,$rgstreamdepletiondatatable,$delete_array);
-	foreach ($results as $ndx=>$value) {
-		$insert_array['nscenario'] = $rgstreamdepletionscenario;
-		$absolutetimestep = $ndx+($startyear-1900)*$subtimestepcount;
-		$insert_array['timestepindex'] = $absolutetimestep;
-		if(array_key_exists($absolutetimestep,$credit_array)) {
-			$value += $credit_array[$absolutetimestep];
+		++$xrange_ndx_count;
+		$xrange_ndx_array[$xrange_ndx_count] = $row[0];
+		$xrange_array[$xrange_ndx_count] = array($row[1],$row[2]);
+		$linex_array[$xrange_ndx_count] = $row[3];
+		$liney_array[$xrange_ndx_count] = $row[4];
+		// note that the rgdss slope has been normalized,
+		//   so cpnvert it back to a standard slope
+		$lineslope_array[$xrange_ndx_count] = $row[4]*$row[5];
+	}	
+	// response functions for each range using range definitions from above
+	$response_arrays=array();
+	for ($ndx = 1; $ndx < $xrange_ndx_count+1; $ndx++) {
+		$response_array=array();
+		$rgxrange_ndx = $xrange_ndx_array[$ndx];
+		$query = "SELECT timestep,rspfnvalue FROM $rgrespfndatatable";
+		$query .= " WHERE model_version=$rgmodelversion";
+		$query .= " AND nzone=$rgresponsezone";
+		$query .= " AND nreach=$rgstreamreach";
+		$query .= " AND nrspfn=$rgrespfnversion";
+		$query .= " AND xrange_ndx=$rgxrange_ndx";
+		$query .= " ORDER BY timestep ASC"; 
+		$results = pg_query($pgconnection, $query);
+		while ($row = pg_fetch_row($results)) {
+			$response_array[$row[0]] = $row[1];
 		}
-		$insert_array['value'] = $value;
-		pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
+		$response_arrays[$ndx]=$response_array;
+	}
+	// run the convolution and create the stream depletion time series
+	$results = hybrid_convolution_linear_scaling_multiple_ranges(
+			$excitation_array,
+			$response_arrays,
+			$subtimestepcount,
+			$linex_array,
+			$liney_array,
+			$lineslope_array,
+			$xrange_array);
+	// save the stream depletion time series back to a pg table
+	if(count($results)) {
+		foreach ($results as $ndx=>$value) {
+			$insert_array['model_version']=$rgmodelversion;
+			$insert_array['nzone']=$rgresponsezone;
+			$insert_array['nscenario']=$rgstreamdepletionscenario;
+			$insert_array['nreach']=$rgstreamreach;
+			$insert_array['nyear']=$startyear;
+			$absolutetimestep = $ndx+($startyear-1900)*$subtimestepcount;
+			$insert_array['ntimestep'] = $absolutetimestep;
+			if(array_key_exists($absolutetimestep,$credit_array)) {
+				$value += $credit_array[$absolutetimestep];
+			}
+			$insert_array['depletion_af'] = $value;
+			pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
+		}
 	}
 }
-//print_r($results);
+
 
 ?>

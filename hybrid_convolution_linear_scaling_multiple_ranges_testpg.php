@@ -501,7 +501,7 @@ pg_delete($pgconnection,$rgstreamdepletiondatatable,$delete_array);
 $subtimestepcount=$options[RGSUBTIMESTEPCOUNT];
 // get the str depl scenario records
 $query = "SELECT model_version, nzone, nreach, nscenario, nyear,";
-$query .= " zone_gwcu_af, zone_recharge_af, streamflow_aprsep_af,"
+$query .= " zone_gwcu_af, zone_recharge_af, streamflow_aprsep_af,";
 $query .= " grouping_type, streamflow_avg_af, resp_fn_type, resp_fn_ndx";
 $query .= " FROM $rgstreamdepletionscenariotable";
 $query .= " WHERE model_version=$rgmodelversion";

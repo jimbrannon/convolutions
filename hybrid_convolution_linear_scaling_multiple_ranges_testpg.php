@@ -612,9 +612,9 @@ for ($i = 0; $i < $recordcount; $i++) {
 			$insert_array['nyear']=$startyear;
 			$absolutetimestep = $ndx+($startyear-1900)*$subtimestepcount;
 			$insert_array['ntimestep'] = $absolutetimestep;
-			if(array_key_exists($absolutetimestep,$credit_array)) {
-				$value += $credit_array[$absolutetimestep];
-			}
+			//if(array_key_exists($absolutetimestep,$credit_array)) {
+			//	$value += $credit_array[$absolutetimestep];
+			//}
 			$insert_array['depletion_af'] = $value;
 			pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
 		}

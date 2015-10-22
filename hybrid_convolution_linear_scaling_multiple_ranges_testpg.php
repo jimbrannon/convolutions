@@ -535,7 +535,7 @@ while ($row = pg_fetch_row($results)) {
 	$zone_netgwcu_af[$recordcount]=$row[5]-$row[6];
 	$streamflow_aprsep_af[$recordcount]=$row[7];
 	$grouping_type[$recordcount]=$row[8];
-	$streamflow_avg_af[$recordcount]=$row[8];
+	$streamflow_avg_af[$recordcount]=$row[9];
 	$resp_fn_type[$recordcount]=$row[10];
 	$resp_fn_ndx[$recordcount]=$row[11];
 	++$recordcount;

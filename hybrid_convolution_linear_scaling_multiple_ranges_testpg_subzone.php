@@ -20,6 +20,7 @@ define("PGPORT","pgport");
 
 define("RGMODELVERSION","rgmodelversion");
 define("RGRESPONSEZONE","rgresponsezone");
+define("RGRESPONSESUBZONE","rgresponsesubzone");
 define("RGSTREAMDEPLETIONSCENARIO","rgstreamdepletionscenario");
 define("RGCREDITMNVERSION","rgcreditmnversion");
 define("RGSUBTIMESTEPCOUNT","rgsubtimestepcount");
@@ -49,11 +50,12 @@ $options[PGPORT]=5432;
 
 $options[RGMODELVERSION]=6; // 4 is 6P97, 5 is 6P98, 6 is 6P98final
 $options[RGRESPONSEZONE]=1; // 1 is SD1 confined gw, 2 is SD2 alluvial gw, 3 is Conejos, etc.
+$options[RGRESPONSESUBZONE]=1; // 1 is RGCWUA, 2 is ???
 $options[RGSTREAMDEPLETIONSCENARIO]=1; // 1 model period data, 2 is ARP 2015 period, etc.
 $options[RGCREDITMNVERSION]=1; // 1 - 
 $options[RGSUBTIMESTEPCOUNT]=12; // 12 would be the usual, years to months
-$options[RGSTREAMDEPLETIONSCENARIOTABLE]="rg_zone_stream_depletion_input_data_annual";
-$options[RGSTREAMDEPLETIONDATATABLE]="rg_zone_stream_depletion_output_data";
+$options[RGSTREAMDEPLETIONSCENARIOTABLE]="rg_subzone_stream_depletion_input_data_annual";
+$options[RGSTREAMDEPLETIONDATATABLE]="rg_subzone_stream_depletion_output_data";
 $options[RGRESPFNFTABLE]="rg_response_functions_linear";
 $options[RGRESPFNDATATABLE]="rg_response_functions_linear_data";
 $options[RGCREDITMNTABLE]="rg_stream_depletion_credit_data";
@@ -398,6 +400,32 @@ if ($rgresponsezone > 0) {
 	if ($debugging) echo "invalid rgresponsezone: $rgresponsezone exiting \n";
 	return;
 }
+/*
+ * get the rg response zone subzonearg
+ * this is required, so bail if it is not set from either the default above or the cli arg
+ */
+if (array_key_exists(RGRESPONSESUBZONE,$options)) {
+	$rgresponsesubzone = $options[RGRESPONSESUBZONE];
+} else {
+	// we can not set a default for this
+	$rgresponsesubzone = 0; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgresponsesubzone default: $rgresponsesubzone \n";
+$rgresponsesubzone_arg = getargs (RGRESPONSESUBZONE,$rgresponsesubzone);
+if ($debugging) echo "rgresponsesubzone_arg: $rgresponsesubzone_arg \n";
+if (strlen($rgresponsesubzone_arg=trim($rgresponsesubzone_arg))) {
+	$rgresponsesubzone = intval($rgresponsesubzone_arg);
+}
+if ($rgresponsesubzone > 0) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgresponsesubzone: $rgresponsesubzone \n";
+	$options[RGRESPONSESUBZONE] = $rgresponsesubzone;
+} else {
+	// can not proceed without this
+	if ($logging) echo "invalid rgresponsesubzone: $rgresponsesubzone exiting \n";
+	if ($debugging) echo "invalid rgresponsesubzone: $rgresponsesubzone exiting \n";
+	return;
+}
 
 /*
  * get the rgrespfntable arg
@@ -495,17 +523,19 @@ if (strlen($rgcreditmntable)) {
 // clear out the previous data for this stream depletion scenario
 $delete_array['model_version']=$rgmodelversion;
 $delete_array['nzone']=$rgresponsezone;
+$delete_array['nsubzone']=$rgresponsezone;
 $delete_array['nscenario']=$rgstreamdepletionscenario;
 pg_delete($pgconnection,$rgstreamdepletiondatatable,$delete_array);
 // subtimestep
 $subtimestepcount=$options[RGSUBTIMESTEPCOUNT];
 // get the str depl scenario records
-$query = "SELECT model_version, nzone, nreach, nscenario, nyear,";
-$query .= " zone_gwcu_af, zone_recharge_af, streamflow_aprsep_af,";
+$query = "SELECT model_version, nzone, nsubzone, nreach, nscenario, nyear,";
+$query .= " subzone_gwcu_af, subzone_recharge_af, zone_gwcu_af, zone_recharge_af, streamflow_aprsep_af,";
 $query .= " grouping_type, streamflow_avg_af, resp_fn_type, resp_fn_ndx";
 $query .= " FROM $rgstreamdepletionscenariotable";
 $query .= " WHERE model_version=$rgmodelversion";
 $query .= " AND nzone=$rgresponsezone";
+$query .= " AND nsubzone=$rgresponsesubzone";
 $query .= " AND nscenario=$rgstreamdepletionscenario";
 $query .= " ORDER BY nyear, nreach";
 $results = pg_query($pgconnection, $query);
@@ -515,6 +545,9 @@ $nzone=array();
 $nreach=array();
 $nscenario=array();
 $nyear=array();
+$subzone_gwcu_af=array();
+$subzone_recharge_af=array();
+$subzone_netgwcu_af=array();
 $zone_gwcu_af=array();
 $zone_recharge_af=array();
 $zone_netgwcu_af=array();
@@ -527,17 +560,21 @@ $resp_fn_ndx=array();
 while ($row = pg_fetch_row($results)) {
 	$model_version[$recordcount]=$row[0];
 	$nzone[$recordcount]=$row[1];
-	$nreach[$recordcount]=$row[2];
-	$nscenario[$recordcount]=$row[3];
-	$nyear[$recordcount]=$row[4];
-	$zone_gwcu_af[$recordcount]=$row[5];
-	$zone_recharge_af[$recordcount]=$row[6];
-	$zone_netgwcu_af[$recordcount]=$row[5]-$row[6];
-	$streamflow_aprsep_af[$recordcount]=$row[7];
-	$grouping_type[$recordcount]=$row[8];
-	$streamflow_avg_af[$recordcount]=$row[8];
-	$resp_fn_type[$recordcount]=$row[10];
-	$resp_fn_ndx[$recordcount]=$row[11];
+	$nsubzone[$recordcount]=$row[2];
+	$nreach[$recordcount]=$row[3];
+	$nscenario[$recordcount]=$row[4];
+	$nyear[$recordcount]=$row[5];
+	$subzone_gwcu_af[$recordcount]=$row[6];
+	$subzone_recharge_af[$recordcount]=$row[7];
+	$subzone_netgwcu_af[$recordcount]=$row[6]-$row[7];
+	$zone_gwcu_af[$recordcount]=$row[8];
+	$zone_recharge_af[$recordcount]=$row[9];
+	$zone_netgwcu_af[$recordcount]=$row[8]-$row[9];
+	$streamflow_aprsep_af[$recordcount]=$row[10];
+	$grouping_type[$recordcount]=$row[11];
+	$streamflow_avg_af[$recordcount]=$row[12];
+	$resp_fn_type[$recordcount]=$row[13];
+	$resp_fn_ndx[$recordcount]=$row[14];
 	++$recordcount;
 	//$netgwcu_array[$row[0]] = $row[1];
 }

@@ -585,6 +585,7 @@ for ($i = 0; $i < $recordcount; $i++) {
 	//net gw cu
 	$excitation_array = array();
 	$excitation_array[$nyear[$i]]=$zone_netgwcu_af[$i];
+	$subzone_array[$nyear[$i]]=$subzone_netgwcu_af[$i];
 	$startyear = $nyear[$i];
 	//range definitions and linear scaling lines for each range
 	$xrange_ndx_array = array();
@@ -631,8 +632,9 @@ for ($i = 0; $i < $recordcount; $i++) {
 		$response_arrays[$ndx]=$response_array;
 	}
 	// run the convolution and create the stream depletion time series
-	$results = hybrid_convolution_linear_scaling_multiple_ranges(
+	$results = hybrid_convolution_linear_scaling_multiple_ranges_subzone(
 			$excitation_array,
+			$subzone_array,
 			$response_arrays,
 			$subtimestepcount,
 			$linex_array,

@@ -585,7 +585,7 @@ for ($i = 0; $i < $recordcount; $i++) {
 		$query .= " AND nzone=$rgresponsezone";
 		$query .= " AND nreach=$rgstreamreach";
 		$query .= " AND nrspfn=$rgrespfnversion";
-		$query .= " AND xrange_ndx=$rgxrange_ndx";
+		$query .= " AND group_ndx=$rgxrange_ndx";
 		$query .= " ORDER BY timestep ASC"; 
 		$results = pg_query($pgconnection, $query);
 		while ($row = pg_fetch_row($results)) {

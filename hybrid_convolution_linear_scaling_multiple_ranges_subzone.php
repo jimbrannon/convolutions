@@ -21,11 +21,12 @@
  *   to make things more readable for typical engineer users,
  *     the response_array will be ONE based
  */
-function hybrid_convolution_linear_scaling_multiple_ranges_subzone($excitation_array=array(), $subzone_array=array(), $response_arrays=array(), $subtimestepcount=1, $linex_array=array(), $liney_array=array(), $lineslope_array=array(), $x_range_array=array()) {
+function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_gwcu_array=array(), $zone_recharge_array=array(), $subzone_gwcu_array=array(), $subzone_recharge_array=array(), $response_arrays=array(), $subtimestepcount=1, $linex_array=array(), $liney_array=array(), $lineslope_array=array(), $x_range_array=array()) {
 	$result = array();
 	$excitation_counter=0;
-	foreach ($excitation_array as  $timestepindex=>$excitation) {
-		$excitation_subzone = $subzone_array[$timestepindex];
+	foreach ($zone_gwcu_array as  $timestepindex=>$zone_gwcu) {
+		$excitation = $zone_gwcu-$zone_recharge_array[$timestepindex];
+		$excitation_subzone = $subzone_gwcu_array[$timestepindex]-$subzone_recharge_array[$timestepindex];
 		/*
 		 * first figure out which of the multiple response functions to use
 		 * based on the excitation

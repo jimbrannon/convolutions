@@ -583,10 +583,14 @@ while ($row = pg_fetch_row($results)) {
 //   instead run each year and stream reach separately so they can be saved separately
 for ($i = 0; $i < $recordcount; $i++) {
 	//net gw cu
-	$excitation_array = array();
-	$subzone_array = array();
-	$excitation_array[$nyear[$i]]=$zone_netgwcu_af[$i];
-	$subzone_array[$nyear[$i]]=$subzone_netgwcu_af[$i];
+	$subzone_gwcu_array = array();
+	$subzone_recharge_array = array();
+	$zone_gwcu_array = array();
+	$zone_recharge_array = array();
+	$subzone_gwcu_array[$nyear[$i]]=$subzone_gwcu_af[$i];
+	$subzone_recharge_array[$nyear[$i]]=$subzone_recharge_af[$i];
+	$zone_gwcu_array[$nyear[$i]]=$zone_gwcu_af[$i];
+	$zone_recharge_array[$nyear[$i]]=$zone_recharge_af[$i];
 	$startyear = $nyear[$i];
 	//range definitions and linear scaling lines for each range
 	$xrange_ndx_array = array();
@@ -634,8 +638,10 @@ for ($i = 0; $i < $recordcount; $i++) {
 	}
 	// run the convolution and create the stream depletion time series
 	$results = hybrid_convolution_linear_scaling_multiple_ranges_subzone(
-			$excitation_array,
-			$subzone_array,
+			$zone_gwcu_array,
+			$zone_recharge_array,
+			$subzone_gwcu_array,
+			$subzone_recharge_array,
 			$response_arrays,
 			$subtimestepcount,
 			$linex_array,

@@ -63,7 +63,26 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_gwcu_ar
 		 * assumes the given response function represents the given x,y point
 		 */
 		//$ye = $liney + ($excitation-$linex)*$lineslope;
-		$ye = $liney + ($excitation_subzone-$linex)*$lineslope;
+		// the following is the current DWR approach - assumes the line goes through the x,y origin
+		//$ye = $liney + ($excitation_subzone-$linex)*$lineslope;
+		/*
+		 * the following algorithm works EVEN WHEN THE LINE DOES NOT GO THROUGH THE ORIGIN
+		 * and gives the same results as the DWR method when the line DOES go through the origin
+		 * define "works" as prorating correctly (linearly) between subzones such that the parts add up to the zone total
+		 */
+		// the 20 yr total str depl for the zone netgwcu
+		$y_zonenetgwcu = $liney + ($excitation_zone-$linex)*$lineslope;
+		// the 20 yr total str depl for the zone gwcu (no recharge)
+		$y_zonegwcu = $liney + ($zone_gwcu-$linex)*$lineslope;
+		// the 20 yr total str accr for the zone recharge
+		$ydiff_zonerecharge = $y_zonegwcu - $y_zonenetgwcu; //should be 0 or positive
+		// calculate the subzone gwcu str depl (no recharge) as a percentage of the zone str depl
+		$y_subzonegwcu = $y_zonegwcu * ($subzone_gwcu_array[$timestepindex]/$zone_gwcu);
+		// calculate the subsubzone recharge str accr as a percentage of the zone recharge str accr
+		$ydiff_subzonerecharge = $ydiff_zonerecharge * ($subzone_recharge_array[$timestepindex]/$zone_recharge_array[$timestepindex]);
+		// the subzone 20 yr str depl is pumping depl minus recharge accretions
+		$ye = $y_subzonegwcu - $ydiff_subzonerecharge;
+		
 		$linearscalefracton = $ye / $liney;
 		if ($excitation_counter) {
 		} else {

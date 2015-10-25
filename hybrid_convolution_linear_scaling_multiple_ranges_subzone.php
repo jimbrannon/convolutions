@@ -25,7 +25,7 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_gwcu_ar
 	$result = array();
 	$excitation_counter=0;
 	foreach ($zone_gwcu_array as  $timestepindex=>$zone_gwcu) {
-		$excitation = $zone_gwcu-$zone_recharge_array[$timestepindex];
+		$excitation_zone = $zone_gwcu-$zone_recharge_array[$timestepindex];
 		$excitation_subzone = $subzone_gwcu_array[$timestepindex]-$subzone_recharge_array[$timestepindex];
 		/*
 		 * first figure out which of the multiple response functions to use
@@ -39,7 +39,7 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_gwcu_ar
 			//print("$x_range_ndx $x_range[0] $x_range[1] \n");
 			$min=$x_range[0];
 			$max=$x_range[1];
-			if (($excitation>=$min)&&($excitation<$max)) {
+			if (($excitation_zone>=$min)&&($excitation_zone<$max)) {
 				$linex=$linex_array[$x_range_ndx];
 				$liney=$liney_array[$x_range_ndx];
 				$lineslope=$lineslope_array[$x_range_ndx];
@@ -81,9 +81,9 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_gwcu_ar
 		// calculate the subsubzone recharge str accr as a percentage of the zone recharge str accr
 		$ydiff_subzonerecharge = $ydiff_zonerecharge * ($subzone_recharge_array[$timestepindex]/$zone_recharge_array[$timestepindex]);
 		// the subzone 20 yr str depl is pumping depl minus recharge accretions
-		$ye = $y_subzonegwcu - $ydiff_subzonerecharge;
+		$y_subzonenetgwcu = $y_subzonegwcu - $ydiff_subzonerecharge;
 		
-		$linearscalefracton = $ye / $liney;
+		$linearscalefracton = $y_subzonenetgwcu / $liney;
 		if ($excitation_counter) {
 		} else {
 			$firsttimestepindex = $timestepindex;

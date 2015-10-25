@@ -21,10 +21,12 @@
  *   to make things more readable for typical engineer users,
  *     the response_array will be ONE based
  */
-function hybrid_convolution_linear_scaling_multiple_ranges($excitation_array=array(), $response_arrays=array(), $subtimestepcount=1, $linex_array=array(), $liney_array=array(), $lineslope_array=array(), $x_range_array=array()) {
+function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_gwcu_array=array(), $zone_recharge_array=array(), $subzone_gwcu_array=array(), $subzone_recharge_array=array(), $response_arrays=array(), $subtimestepcount=1, $linex_array=array(), $liney_array=array(), $lineslope_array=array(), $x_range_array=array()) {
 	$result = array();
 	$excitation_counter=0;
-	foreach ($excitation_array as  $timestepindex=>$excitation) {
+	foreach ($zone_gwcu_array as  $timestepindex=>$zone_gwcu) {
+		$excitation_zone = $zone_gwcu-$zone_recharge_array[$timestepindex];
+		$excitation_subzone = $subzone_gwcu_array[$timestepindex]-$subzone_recharge_array[$timestepindex];
 		/*
 		 * first figure out which of the multiple response functions to use
 		 * based on the excitation
@@ -37,7 +39,7 @@ function hybrid_convolution_linear_scaling_multiple_ranges($excitation_array=arr
 			//print("$x_range_ndx $x_range[0] $x_range[1] \n");
 			$min=$x_range[0];
 			$max=$x_range[1];
-			if (($excitation>=$min)&&($excitation<$max)) {
+			if (($excitation_zone>=$min)&&($excitation_zone<$max)) {
 				$linex=$linex_array[$x_range_ndx];
 				$liney=$liney_array[$x_range_ndx];
 				$lineslope=$lineslope_array[$x_range_ndx];
@@ -51,6 +53,7 @@ function hybrid_convolution_linear_scaling_multiple_ranges($excitation_array=arr
 		}
 		/*
 		 * now we resume your regularly scheduled programming...
+		 * BUT WITH THE SUBZONE EXCITATION!!
 		 */
 		
 		/*
@@ -59,8 +62,28 @@ function hybrid_convolution_linear_scaling_multiple_ranges($excitation_array=arr
 		 * find using the equation of the given line
 		 * assumes the given response function represents the given x,y point
 		 */
-		$ye = $liney + ($excitation-$linex)*$lineslope;
-		$linearscalefracton = $ye / $liney;
+		//$ye = $liney + ($excitation-$linex)*$lineslope;
+		// the following is the current DWR approach - assumes the line goes through the x,y origin
+		//$ye = $liney + ($excitation_subzone-$linex)*$lineslope;
+		/*
+		 * the following algorithm works EVEN WHEN THE LINE DOES NOT GO THROUGH THE ORIGIN
+		 * and gives the same results as the DWR method when the line DOES go through the origin
+		 * define "works" as prorating correctly (linearly) between subzones such that the parts add up to the zone total
+		 */
+		// the 20 yr total str depl for the zone netgwcu
+		$y_zonenetgwcu = $liney + ($excitation_zone-$linex)*$lineslope;
+		// the 20 yr total str depl for the zone gwcu (no recharge)
+		$y_zonegwcu = $liney + ($zone_gwcu-$linex)*$lineslope;
+		// the 20 yr total str accr for the zone recharge
+		$ydiff_zonerecharge = $y_zonegwcu - $y_zonenetgwcu; //should be 0 or positive
+		// calculate the subzone gwcu str depl (no recharge) as a percentage of the zone str depl
+		$y_subzonegwcu = $y_zonegwcu * ($subzone_gwcu_array[$timestepindex]/$zone_gwcu);
+		// calculate the subsubzone recharge str accr as a percentage of the zone recharge str accr
+		$ydiff_subzonerecharge = $ydiff_zonerecharge * ($subzone_recharge_array[$timestepindex]/$zone_recharge_array[$timestepindex]);
+		// the subzone 20 yr str depl is pumping depl minus recharge accretions
+		$y_subzonenetgwcu = $y_subzonegwcu - $ydiff_subzonerecharge;
+		
+		$linearscalefracton = $y_subzonenetgwcu / $liney;
 		if ($excitation_counter) {
 		} else {
 			$firsttimestepindex = $timestepindex;

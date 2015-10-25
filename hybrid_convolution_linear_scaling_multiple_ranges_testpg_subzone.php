@@ -551,6 +551,7 @@ $subzone_netgwcu_af=array();
 $zone_gwcu_af=array();
 $zone_recharge_af=array();
 $zone_netgwcu_af=array();
+$zone_grpval=array();
 $streamflow_aprsep_af=array();
 $grouping_type=array();
 $streamflow_avg_af=array();
@@ -572,6 +573,16 @@ while ($row = pg_fetch_row($results)) {
 	$zone_netgwcu_af[$recordcount]=$row[8]-$row[9];
 	$streamflow_aprsep_af[$recordcount]=$row[10];
 	$grouping_type[$recordcount]=$row[11];
+	switch ($grouping_type[$recordcount]) {
+		case 0:
+			$zone_grpval[$recordcount]=$zone_netgwcu_af[$recordcount];
+			break;
+		case 1:
+			$zone_grpval[$recordcount]=$streamflow_aprsep_af[$recordcount];
+			break;
+		default:
+			$zone_grpval[$recordcount]=$zone_netgwcu_af[$recordcount];
+	}
 	$streamflow_avg_af[$recordcount]=$row[12];
 	$resp_fn_type[$recordcount]=$row[13];
 	$resp_fn_ndx[$recordcount]=$row[14];
@@ -591,6 +602,7 @@ for ($i = 0; $i < $recordcount; $i++) {
 	$subzone_recharge_array[$nyear[$i]]=$subzone_recharge_af[$i];
 	$zone_gwcu_array[$nyear[$i]]=$zone_gwcu_af[$i];
 	$zone_recharge_array[$nyear[$i]]=$zone_recharge_af[$i];
+	$zone_grpval_array[$nyear[$i]]=$zone_grpval[$i];
 	$startyear = $nyear[$i];
 	//range definitions and linear scaling lines for each range
 	$xrange_ndx_array = array();
@@ -638,6 +650,7 @@ for ($i = 0; $i < $recordcount; $i++) {
 	}
 	// run the convolution and create the stream depletion time series
 	$results = hybrid_convolution_linear_scaling_multiple_ranges_subzone(
+			$zone_grpval_array,
 			$zone_gwcu_array,
 			$zone_recharge_array,
 			$subzone_gwcu_array,

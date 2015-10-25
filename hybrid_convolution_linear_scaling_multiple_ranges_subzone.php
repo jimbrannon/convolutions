@@ -21,41 +21,42 @@
  *   to make things more readable for typical engineer users,
  *     the response_array will be ONE based
  */
-function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_gwcu_array=array(), $zone_recharge_array=array(), $subzone_gwcu_array=array(), $subzone_recharge_array=array(), $response_arrays=array(), $subtimestepcount=1, $linex_array=array(), $liney_array=array(), $lineslope_array=array(), $x_range_array=array()) {
+function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_array=array(), $zone_gwcu_array=array(), $zone_recharge_array=array(), $subzone_gwcu_array=array(), $subzone_recharge_array=array(), $response_arrays=array(), $subtimestepcount=1, $linex_array=array(), $liney_array=array(), $lineslope_array=array(), $grp_range_array=array()) {
 	$result = array();
 	$excitation_counter=0;
-	foreach ($zone_gwcu_array as  $timestepindex=>$zone_gwcu) {
-		$excitation_zone = $zone_gwcu-$zone_recharge_array[$timestepindex];
-		$excitation_subzone = $subzone_gwcu_array[$timestepindex]-$subzone_recharge_array[$timestepindex];
+	//foreach ($zone_gwcu_array as  $timestepindex=>$zone_gwcu) {
+	foreach ($zone_grpval_array as  $timestepindex=>$zone_grpval) {
+		//$excitation_zone = $zone_gwcu_array[$timestepindex]-$zone_recharge_array[$timestepindex];
+		//$excitation_subzone = $subzone_gwcu_array[$timestepindex]-$subzone_recharge_array[$timestepindex];
+		$zone_netgwcu = $zone_gwcu_array[$timestepindex]-$zone_recharge_array[$timestepindex];
+		$subzone_netgwcu = $subzone_gwcu_array[$timestepindex]-$subzone_recharge_array[$timestepindex];
 		/*
 		 * first figure out which of the multiple response functions to use
-		 * based on the excitation
-		 * (for rgdss, this would be the netgwcu excitation compared to the
-		 *  predefined (during calibration) netgwcu ranges.
-		 *  each range has it's own response function and linear scaling line)
+		 * based on this zone's grouping value (zone_grpval)
+		 * could be gwnetcu or streamflow ranges, for example, 
+		 * (for rgdss, this is set up in the calibration phase)
+		 *  each range has it's own response function and linear scaling line
 		 */
-		$x_range_ndx=null;
-		foreach ($x_range_array as $x_range_ndx=>$x_range) {
-			//print("$x_range_ndx $x_range[0] $x_range[1] \n");
-			$min=$x_range[0];
-			$max=$x_range[1];
-			if (($excitation_zone>=$min)&&($excitation_zone<$max)) {
-				$linex=$linex_array[$x_range_ndx];
-				$liney=$liney_array[$x_range_ndx];
-				$lineslope=$lineslope_array[$x_range_ndx];
-				//print("$x_range_ndx $linex $liney $lineslope \n");
-				$response_array=$response_arrays[$x_range_ndx];
+		$linex=null;
+		$liney=null;
+		$lineslope=null;
+		$response_array=null;
+		foreach ($grp_range_array as $grp_range_ndx=>$grp_range) {
+			//print("$grp_range_ndx $grp_range[0] $grp_range[1] \n");
+			$min=$grp_range[0];
+			$max=$grp_range[1];
+			if (($zone_grpval>=$min)&&($zone_grpval<=$max)) {
+				$linex=$linex_array[$grp_range_ndx];
+				$liney=$liney_array[$grp_range_ndx];
+				$lineslope=$lineslope_array[$grp_range_ndx];
+				//print("$grp_range_ndx $linex $liney $lineslope \n");
+				$response_array=$response_arrays[$grp_range_ndx];
 			}
 		}
-		if (isset($x_range_ndx)) {
+		if (isset($linex)&&isset($liney)&&isset($lineslope)&&isset($response_array)) {
 		} else {
 			return null;
 		}
-		/*
-		 * now we resume your regularly scheduled programming...
-		 * BUT WITH THE SUBZONE EXCITATION!!
-		 */
-		
 		/*
 		 * determine a linear scaling fraction to use against the response function
 		 * = ye (y for excitation) / liney
@@ -71,13 +72,13 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_gwcu_ar
 		 * define "works" as prorating correctly (linearly) between subzones such that the parts add up to the zone total
 		 */
 		// the 20 yr total str depl for the zone netgwcu
-		$y_zonenetgwcu = $liney + ($excitation_zone-$linex)*$lineslope;
+		$y_zonenetgwcu = $liney + ($zone_netgwcu-$linex)*$lineslope;
 		// the 20 yr total str depl for the zone gwcu (no recharge)
-		$y_zonegwcu = $liney + ($zone_gwcu-$linex)*$lineslope;
+		$y_zonegwcu = $liney + ($zone_gwcu_array[$timestepindex]-$linex)*$lineslope;
 		// the 20 yr total str accr for the zone recharge
 		$ydiff_zonerecharge = $y_zonegwcu - $y_zonenetgwcu; //should be 0 or positive
 		// calculate the subzone gwcu str depl (no recharge) as a percentage of the zone str depl
-		$y_subzonegwcu = $y_zonegwcu * ($subzone_gwcu_array[$timestepindex]/$zone_gwcu);
+		$y_subzonegwcu = $y_zonegwcu * ($subzone_gwcu_array[$timestepindex]/$zone_gwcu_array[$timestepindex]);
 		// calculate the subsubzone recharge str accr as a percentage of the zone recharge str accr
 		$ydiff_subzonerecharge = $ydiff_zonerecharge * ($subzone_recharge_array[$timestepindex]/$zone_recharge_array[$timestepindex]);
 		// the subzone 20 yr str depl is pumping depl minus recharge accretions

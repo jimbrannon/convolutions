@@ -12,7 +12,7 @@
  *     but the response function has time steps of months
  *     because of this, the output array will start with index 1 starting in the first subtimestep (eg month)
  *     of the first timestep in the excitation array (eg year)
- *   excitation_array needs to have a sequential integer index
+ *   excitation_array needs to have an integer index (but not necessarily sequential)
  *     (can be years, a month counter, etc. does not necessarily have to start with 1 or be continuous)
  *     for the first dimension and a real value for the second dimension
  *   response_array needs to have an arbitrary counting index as the first dimension

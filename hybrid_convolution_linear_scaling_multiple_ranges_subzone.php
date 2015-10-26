@@ -21,12 +21,7 @@
  *   to make things more readable for typical engineer users,
  *     the response_array will be ONE based
  */
-function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_array=array(),
-									$zone_gwcu_array=array(), $zone_recharge_array=array(),
-									$subzone_gwcu_array=array(), $subzone_recharge_array=array(),
-									$response_arrays=array(), $subtimestepcount=1,
-									$linex_array=array(), $liney_array=array(), $lineslope_array=array(),
-									$grp_range_array=array()) {
+function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_array, $zone_gwcu_array, $zone_recharge_array, $subzone_gwcu_array, $subzone_recharge_array, $response_arrays, $subtimestepcount=1, $linex_array, $liney_array, $lineslope_array, $grp_range_array) {
 	$result = array();
 	$excitation_counter=0;
 	//foreach ($zone_gwcu_array as  $timestepindex=>$zone_gwcu) {
@@ -86,7 +81,11 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_
 		// calculate the subzone gwcu str depl (no recharge) as a percentage of the zone str depl
 		$y_subzonegwcu = $y_zonegwcu * ($subzone_gwcu_array[$timestepindex]/$zone_gwcu_array[$timestepindex]);
 		// calculate the subsubzone recharge str accr as a percentage of the zone recharge str accr
-		$ydiff_subzonerecharge = $ydiff_zonerecharge * ($subzone_recharge_array[$timestepindex]/$zone_recharge_array[$timestepindex]);
+		if ($zone_recharge_array[$timestepindex]>0.0) {
+			$ydiff_subzonerecharge = $ydiff_zonerecharge * ($subzone_recharge_array[$timestepindex]/$zone_recharge_array[$timestepindex]);
+		} else {
+			$ydiff_subzonerecharge = 0.0;
+		}
 		// the subzone 20 yr str depl is pumping depl minus recharge accretions
 		$y_subzonenetgwcu = $y_subzonegwcu - $ydiff_subzonerecharge;
 		$linearscalefracton = $y_subzonenetgwcu / $liney;

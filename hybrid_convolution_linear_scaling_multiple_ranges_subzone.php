@@ -21,7 +21,12 @@
  *   to make things more readable for typical engineer users,
  *     the response_array will be ONE based
  */
-function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_array=array(), $zone_gwcu_array=array(), $zone_recharge_array=array(), $subzone_gwcu_array=array(), $subzone_recharge_array=array(), $response_arrays=array(), $subtimestepcount=1, $linex_array=array(), $liney_array=array(), $lineslope_array=array(), $grp_range_array=array()) {
+function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_array=array(),
+									$zone_gwcu_array=array(), $zone_recharge_array=array(),
+									$subzone_gwcu_array=array(), $subzone_recharge_array=array(),
+									$response_arrays=array(), $subtimestepcount=1,
+									$linex_array=array(), $liney_array=array(), $lineslope_array=array(),
+									$grp_range_array=array()) {
 	$result = array();
 	$excitation_counter=0;
 	//foreach ($zone_gwcu_array as  $timestepindex=>$zone_gwcu) {
@@ -53,13 +58,14 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_
 				$response_array=$response_arrays[$grp_range_ndx];
 			}
 		}
-		if (isset($linex)&&isset($liney)&&isset($lineslope)&&isset($response_array)) {
-		} else {
+		if (!(isset($linex)&&isset($liney)&&isset($lineslope)&&isset($response_array))) {
 			return null;
 		}
 		/*
-		 * determine a linear scaling fraction to use against the response function
-		 * = ye (y for excitation) / liney
+		 * determine a linear "scaling fraction" to use against the response function
+		 * the response function 20 yr str depl (volume under the curve) = liney,
+		 * so just find the ratio
+		 * = y_subzonenetgwcu (subzone 20 yr str depl volume) / liney
 		 * find using the equation of the given line
 		 * assumes the given response function represents the given x,y point
 		 */
@@ -83,10 +89,9 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_
 		$ydiff_subzonerecharge = $ydiff_zonerecharge * ($subzone_recharge_array[$timestepindex]/$zone_recharge_array[$timestepindex]);
 		// the subzone 20 yr str depl is pumping depl minus recharge accretions
 		$y_subzonenetgwcu = $y_subzonegwcu - $ydiff_subzonerecharge;
-		
 		$linearscalefracton = $y_subzonenetgwcu / $liney;
-		if ($excitation_counter) {
-		} else {
+		
+		if (!$excitation_counter) {
 			$firsttimestepindex = $timestepindex;
 		}
 		$startingsubtimestep = ($timestepindex-$firsttimestepindex) * $subtimestepcount + 1;

@@ -574,10 +574,10 @@ while ($row = pg_fetch_row($results)) {
 	$streamflow_aprsep_af[$recordcount]=$row[10];
 	$grouping_type[$recordcount]=$row[11];
 	switch ($grouping_type[$recordcount]) {
-		case 0:
+		case 1: // gwnetcu
 			$zone_grpval[$recordcount]=$zone_netgwcu_af[$recordcount];
 			break;
-		case 1:
+		case 2: // stream flow
 			$zone_grpval[$recordcount]=$streamflow_aprsep_af[$recordcount];
 			break;
 		default:
@@ -605,8 +605,10 @@ for ($i = 0; $i < $recordcount; $i++) {
 	$zone_grpval_array[$nyear[$i]]=$zone_grpval[$i];
 	$startyear = $nyear[$i];
 	//range definitions and linear scaling lines for each range
-	$xrange_ndx_array = array();
-	$xrange_array = array();
+	//$xrange_ndx_array = array();
+	//$xrange_array = array();
+	$group_ndx_array = array();
+	$group_range_array = array();
 	$linex_array = array();
 	$liney_array = array();
 	$lineslope_array = array();
@@ -619,28 +621,28 @@ for ($i = 0; $i < $recordcount; $i++) {
 	$query .= " AND nrspfn=$rgrespfnversion";
 	$query .= " ORDER BY group_ndx ASC";
 	$results = pg_query($pgconnection, $query);
-	$xrange_ndx_count=0;
+	$group_ndx_count=0;
 	while ($row = pg_fetch_row($results)) {
-		++$xrange_ndx_count;
-		$xrange_ndx_array[$xrange_ndx_count] = $row[0];
-		$xrange_array[$xrange_ndx_count] = array($row[1],$row[2]);
-		$linex_array[$xrange_ndx_count] = $row[3];
-		$liney_array[$xrange_ndx_count] = $row[4];
+		++$group_ndx_count;
+		$group_ndx_array[$group_ndx_count] = $row[0];
+		$group_range_array[$group_ndx_count] = array($row[1],$row[2]);
+		$linex_array[$group_ndx_count] = $row[3];
+		$liney_array[$group_ndx_count] = $row[4];
 		// note that the rgdss slope has been normalized,
 		//   so cpnvert it back to a standard slope
-		$lineslope_array[$xrange_ndx_count] = $row[4]*$row[5];
+		$lineslope_array[$group_ndx_count] = $row[4]*$row[5];
 	}	
 	// response functions for each range using range definitions from above
 	$response_arrays=array();
 	for ($ndx = 1; $ndx < $xrange_ndx_count+1; $ndx++) {
 		$response_array=array();
-		$rgxrange_ndx = $xrange_ndx_array[$ndx];
+		$rggroup_ndx = $group_ndx_array[$ndx];
 		$query = "SELECT timestep,rspfnvalue FROM $rgrespfndatatable";
 		$query .= " WHERE model_version=$rgmodelversion";
 		$query .= " AND nzone=$rgresponsezone";
 		$query .= " AND nreach=$rgstreamreach";
 		$query .= " AND nrspfn=$rgrespfnversion";
-		$query .= " AND group_ndx=$rgxrange_ndx";
+		$query .= " AND group_ndx=$rggroup_ndx";
 		$query .= " ORDER BY timestep ASC"; 
 		$results = pg_query($pgconnection, $query);
 		while ($row = pg_fetch_row($results)) {
@@ -660,7 +662,7 @@ for ($i = 0; $i < $recordcount; $i++) {
 			$linex_array,
 			$liney_array,
 			$lineslope_array,
-			$xrange_array);
+			$group_range_array);
 	// save the stream depletion time series back to a pg table
 	if(count($results)) {
 		foreach ($results as $ndx=>$value) {

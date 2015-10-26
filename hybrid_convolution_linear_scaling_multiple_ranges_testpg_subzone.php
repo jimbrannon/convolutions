@@ -599,6 +599,7 @@ for ($i = 0; $i < $recordcount; $i++) {
 	$subzone_recharge_array = array();
 	$zone_gwcu_array = array();
 	$zone_recharge_array = array();
+	$zone_grpval_array = array();
 	$subzone_gwcu_array[$nyear[$i]]=$subzone_gwcu_af[$i];
 	$subzone_recharge_array[$nyear[$i]]=$subzone_recharge_af[$i];
 	$zone_gwcu_array[$nyear[$i]]=$zone_gwcu_af[$i];

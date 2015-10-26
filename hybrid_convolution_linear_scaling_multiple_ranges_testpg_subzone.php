@@ -594,7 +594,9 @@ while ($row = pg_fetch_row($results)) {
 //   instead run each year and stream reach separately so they can be saved separately
 for ($i = 0; $i < $recordcount; $i++) {
 	//net gw cu
-	echo "i $i year $nyear[$i] reach $nreach[$i] \n";
+	if ($debugging) {
+		echo "i $i year $nyear[$i] reach $nreach[$i] \n";
+	}
 	$subzone_gwcu_array = array();
 	$subzone_recharge_array = array();
 	$zone_gwcu_array = array();

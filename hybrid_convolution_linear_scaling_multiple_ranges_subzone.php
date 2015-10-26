@@ -22,11 +22,14 @@
  *     the response_array will be ONE based
  */
 function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_array, $zone_gwcu_array, $zone_recharge_array, $subzone_gwcu_array, $subzone_recharge_array, $response_arrays, $subtimestepcount=1, $linex_array, $liney_array, $lineslope_array, $grp_range_array) {
-	print_r($zone_grpval_array);
-	print_r($zone_gwcu_array);
-	print_r($zone_recharge_array);
-	print_r($subzone_gwcu_array);
-	print_r($subzone_recharge_array);
+	$debugging = false;
+	if ($debugging) {
+		print_r($zone_grpval_array);
+		print_r($zone_gwcu_array);
+		print_r($zone_recharge_array);
+		print_r($subzone_gwcu_array);
+		print_r($subzone_recharge_array);
+	}
 	$result = array();
 	$excitation_counter=0;
 	//foreach ($zone_gwcu_array as  $timestepindex=>$zone_gwcu) {

@@ -21,7 +21,7 @@
  *   to make things more readable for typical engineer users,
  *     the output, the response_array, will be ONE based (the response array index starts at 1, not 0)
  */
-function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_array,
+function hybrid_convolution_linear_scaling_multiple_ranges($zone_grpval_array,
 		$zone_gwcu_array, $zone_recharge_array,
 		$response_arrays, $subtimestepcount=1, $linex_array, $liney_array, $lineslope_array,
 		$grp_range_array) {

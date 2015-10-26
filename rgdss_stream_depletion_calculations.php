@@ -3,7 +3,7 @@
  * test the hybrid convolution with linear scaling function
  */
 include("misc_io.php");
-include("hybrid_convolution_linear_scaling_multiple_ranges_subzone.php");
+include("hybrid_convolution_linear_scaling_multiple_ranges.php");
 
 /*
  * constants - do not modify

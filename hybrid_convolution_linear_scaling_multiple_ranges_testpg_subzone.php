@@ -634,7 +634,7 @@ for ($i = 0; $i < $recordcount; $i++) {
 	}	
 	// response functions for each range using range definitions from above
 	$response_arrays=array();
-	for ($ndx = 1; $ndx < $xrange_ndx_count+1; $ndx++) {
+	for ($ndx = 1; $ndx < $group_ndx_count+1; $ndx++) {
 		$response_array=array();
 		$rggroup_ndx = $group_ndx_array[$ndx];
 		$query = "SELECT timestep,rspfnvalue FROM $rgrespfndatatable";

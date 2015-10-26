@@ -12,16 +12,19 @@
  *     but the response function has time steps of months
  *     because of this, the output array will start with index 1 starting in the first subtimestep (eg month)
  *     of the first timestep in the excitation array (eg year)
- *   excitation_array needs to have an integer index
+ *   excitation_array needs to have a sequential integer index
  *     (can be years, a month counter, etc. does not necessarily have to start with 1 or be continuous)
  *     for the first dimension and a real value for the second dimension
- *   response_array needs to have an arbitrary counting index as the fist dimension
+ *   response_array needs to have an arbitrary counting index as the first dimension
  *     and a real "response" value for the second dimension
  *   the result array will be in the same time step as the RESPONSE array
  *   to make things more readable for typical engineer users,
- *     the response_array will be ONE based
+ *     the output, the response_array, will be ONE based (the response array index starts at 1, not 0)
  */
-function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_array, $zone_gwcu_array, $zone_recharge_array, $subzone_gwcu_array, $subzone_recharge_array, $response_arrays, $subtimestepcount=1, $linex_array, $liney_array, $lineslope_array, $grp_range_array) {
+function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_array,
+		$zone_gwcu_array, $zone_recharge_array, $subzone_gwcu_array, $subzone_recharge_array,
+		$response_arrays, $subtimestepcount=1, $linex_array, $liney_array, $lineslope_array,
+		$grp_range_array) {
 	$debugging = false;
 	if ($debugging) {
 		print_r($zone_grpval_array);
@@ -33,6 +36,10 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_
 	$result = array();
 	$excitation_counter=0;
 	//foreach ($zone_gwcu_array as  $timestepindex=>$zone_gwcu) {
+	/*
+	 * loop through the annual time steps in the $zone_grpval_array array
+	 * assumes all the other arrays have the same time steps
+	 */
 	foreach ($zone_grpval_array as  $timestepindex=>$zone_grpval) {
 		//$excitation_zone = $zone_gwcu_array[$timestepindex]-$zone_recharge_array[$timestepindex];
 		//$excitation_subzone = $subzone_gwcu_array[$timestepindex]-$subzone_recharge_array[$timestepindex];
@@ -49,6 +56,11 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_
 		$liney=null;
 		$lineslope=null;
 		$response_array=null;
+		/*
+		 * loop through the grouping ranges
+		 * the last one that contains the value, $zone_grpval, will be used
+		 * this determines which response function and response function line will be used
+		 */
 		foreach ($grp_range_array as $grp_range_ndx=>$grp_range) {
 			//print("$grp_range_ndx $grp_range[0] $grp_range[1] \n");
 			$min=$grp_range[0];
@@ -66,19 +78,21 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_
 		}
 		/*
 		 * determine a linear "scaling fraction" to use against the response function
-		 * the response function 20 yr str depl (volume under the curve) = liney,
-		 * so just find the ratio
-		 * = y_subzonenetgwcu (subzone 20 yr str depl volume) / liney
-		 * find using the equation of the given line
-		 * assumes the given response function represents the given x,y point
+		 * the response function must match the linex and liney values, so
+		 *   the response function 20 yr str depl (volume under the curve) = liney,
+		 * the "scaling fraction" is the ratio between the response function liney
+		 *   and the depletion for the given excitation (gwnetcu) for the subzone
+		 *   "scaling fraction" = y_subzonenetgwcu (subzone 20 yr str depl volume) / liney
+		 * find y_subzonenetgwcu using the equation of the given line
 		 */
 		//$ye = $liney + ($excitation-$linex)*$lineslope;
 		// the following is the current DWR approach - assumes the line goes through the x,y origin
 		//$ye = $liney + ($excitation_subzone-$linex)*$lineslope;
 		/*
 		 * the following algorithm works EVEN WHEN THE LINE DOES NOT GO THROUGH THE ORIGIN
-		 * and gives the same results as the DWR method when the line DOES go through the origin
-		 * define "works" as prorating correctly (linearly) between subzones such that the parts add up to the zone total
+		 * but also gives the same results as the DWR method when the line DOES go through the origin
+		 * define "works" as prorating correctly (linearly) between subzones such that
+		 *   the str depletions of the parts (subzones) add up to the whole (zone)
 		 */
 		// the 20 yr total str depl for the zone netgwcu
 		$y_zonenetgwcu = $liney + ($zone_netgwcu-$linex)*$lineslope;

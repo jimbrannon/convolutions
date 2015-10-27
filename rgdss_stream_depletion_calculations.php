@@ -294,7 +294,7 @@ if (strlen($rgstreamdepletiondatatable)) {
 	if ($debugging) echo "missing $rgstreamdepletiondatatable exiting \n";
 	return;
 }
-
+return;
 /*
  * make the pg coonnection
  */

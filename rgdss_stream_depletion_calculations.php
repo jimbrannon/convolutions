@@ -493,9 +493,12 @@ if (strlen($rgcreditmntable)) {
 //$excitation_array=array(2001=>5.0,2002=>10.0,2003=>0.0,2004=>15.0);
 
 // clear out the previous data for this stream depletion scenario
+$delete_array=array();
 $delete_array['model_version']=$rgmodelversion;
 $delete_array['nzone']=$rgresponsezone;
-$delete_array['nsubzone']=$rgresponsezone;
+if($rgresponsesubzone) {
+	$delete_array['nsubzone']=$rgresponsezone;
+}
 $delete_array['nscenario']=$rgstreamdepletionscenario;
 pg_delete($pgconnection,$rgstreamdepletiondatatable,$delete_array);
 // subtimestep
@@ -695,6 +698,7 @@ for ($i = 0; $i < $recordcount; $i++) {
 	// save the stream depletion time series back to a pg table
 	if(count($results)) {
 		foreach ($results as $ndx=>$value) {
+			$insert_array=array();
 			$insert_array['model_version']=$rgmodelversion;
 			$insert_array['nzone']=$rgresponsezone;
 			if($rgresponsesubzone) {

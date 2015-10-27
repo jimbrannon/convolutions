@@ -610,10 +610,9 @@ for ($i = 0; $i < $recordcount; $i++) {
 		echo "i $i year $nyear[$i] reach $nreach[$i] \n";
 	}
 	switch ($resp_fn_type[$i]) {
-		case 2: // hybrid response function - 12 month pattern times average gwnetcu (10 yr)  
-			break;
-		case 1: // linear response function
-		default:
+		case 2: // hybrid response function - 12 month pattern times average gwnetcu (10 yr)
+			// set up the gwcu and recharge arrays
+			// in this case, these should be 10 year average values  
 			if($rgresponsesubzone) {
 				$subzone_gwcu_array = array();
 				$subzone_recharge_array = array();
@@ -624,8 +623,112 @@ for ($i = 0; $i < $recordcount; $i++) {
 			$zone_recharge_array = array();
 			$zone_gwcu_array[$nyear[$i]]=$zone_gwcu_af[$i];
 			$zone_recharge_array[$nyear[$i]]=$zone_recharge_af[$i];
+			// set up the grouping value
+			// for rgdss 2015, this should be the appropriate stream flow value (apr-sep total)
 			$zone_grpval_array = array();
 			$zone_grpval_array[$nyear[$i]]=$zone_grpval[$i];
+			//the starting year, in this case, only doing one year at a time, so it is the end year, too
+			$startyear = $nyear[$i];
+			// initialize arrays to hold the range definitions for each range
+			$group_ndx_array = array();
+			$group_range_array = array();
+			//the stream reach for this record
+			$rgstreamreach=$nreach[$i];
+			// the response function version for this record, generally this will be 1 (until we have some alternative response functions to deal with)
+			$rgrespfnversion=$resp_fn_ndx[$i];
+			// get the hybrid response function range definitions
+			$query = "SELECT group_ndx,group_min,group_max FROM $rghybridtable";
+			$query .= " WHERE model_version=$rgmodelversion";
+			$query .= " AND nzone=$rgresponsezone";
+			$query .= " AND nreach=$rgstreamreach";
+			$query .= " AND nrspfn=$rgrespfnversion";
+			$query .= " ORDER BY group_ndx ASC";
+			$results = pg_query($pgconnection, $query);
+			$group_ndx_count=0;
+			while ($row = pg_fetch_row($results)) {
+				++$group_ndx_count;
+				$group_ndx_array[$group_ndx_count] = $row[0];
+				$group_range_array[$group_ndx_count] = array($row[1],$row[2]);
+			}
+			// get the 12 month str depletion pattern
+			$response_arrays=array();
+			for ($ndx = 1; $ndx < $group_ndx_count+1; $ndx++) {
+				$response_array=array();
+				$rggroup_ndx = $group_ndx_array[$ndx];
+				$query = "SELECT month_ndx,strdepl_fraction FROM $rghybriddatatable";
+				$query .= " WHERE model_version=$rgmodelversion";
+				$query .= " AND nzone=$rgresponsezone";
+				$query .= " AND nreach=$rgstreamreach";
+				$query .= " AND nrspfn=$rgrespfnversion";
+				$query .= " AND group_ndx=$rggroup_ndx";
+				$query .= " ORDER BY timestep ASC";
+				$results = pg_query($pgconnection, $query);
+				while ($row = pg_fetch_row($results)) {
+					$response_array[$row[0]] = $row[1];
+				}
+				$response_arrays[$ndx]=$response_array;
+			}
+			// create the monthly stream depletions
+			if($rgresponsesubzone) {
+				$results = hybrid_method_multiple_ranges_subzone( // results come back indexed by the monthly time step index
+						$zone_grpval_array, // should be a stream flow
+						$zone_gwcu_array, // should be 10 year avg
+						$zone_recharge_array, // should be 10 year avg
+						$subzone_gwcu_array, // should be 10 year avg
+						$subzone_recharge_array, // should be 10 year avg
+						$response_arrays, // the monthly % of 10 yr avg arrays
+						$subtimestepcount, // in this case, should be 12
+						$group_range_array); // the range definitions (stream flows)
+			} else {
+				$results = hybrid_method_multiple_ranges( // results come back indexed by the monthly time step index
+						$zone_grpval_array, // should be a stream flow
+						$zone_gwcu_array, // should be 10 year avg
+						$zone_recharge_array, // should be 10 year avg
+						$response_arrays, // the monthly % of 10 yr avg arrays
+						$subtimestepcount, // in this case, should be 12
+						$group_range_array); // the range definitions (stream flows)
+			}
+			// save the stream depletion time series back to a pg table
+			if(count($results)) {
+				foreach ($results as $ndx=>$value) {
+					$insert_array=array();
+					$insert_array['model_version']=$rgmodelversion;
+					$insert_array['nzone']=$rgresponsezone;
+					if($rgresponsesubzone) {
+						$insert_array['nsubzone']=$rgresponsesubzone;
+					}
+					$insert_array['nscenario']=$rgstreamdepletionscenario;
+					$insert_array['nreach']=$rgstreamreach;
+					$insert_array['nyear']=$startyear;
+					$absolutetimestep = $ndx+($startyear-1900)*$subtimestepcount;
+					$insert_array['ntimestep'] = $absolutetimestep;
+					//if(array_key_exists($absolutetimestep,$credit_array)) {
+					//	$value += $credit_array[$absolutetimestep];
+					//}
+					$insert_array['depletion_af'] = $value;
+					pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
+				}
+			}
+				
+			break;
+		case 1: // linear response function
+		default:
+			// set up the gwcu and recharge arrays
+			if($rgresponsesubzone) {
+				$subzone_gwcu_array = array();
+				$subzone_recharge_array = array();
+				$subzone_gwcu_array[$nyear[$i]]=$subzone_gwcu_af[$i];
+				$subzone_recharge_array[$nyear[$i]]=$subzone_recharge_af[$i];
+			}
+			$zone_gwcu_array = array();
+			$zone_recharge_array = array();
+			$zone_gwcu_array[$nyear[$i]]=$zone_gwcu_af[$i];
+			$zone_recharge_array[$nyear[$i]]=$zone_recharge_af[$i];
+			// set up the grouping value
+			// for rgdss 2015, this could be a zone gwnetcu or stream flow value (apr-sep total)
+			$zone_grpval_array = array();
+			$zone_grpval_array[$nyear[$i]]=$zone_grpval[$i];
+			//the starting year, in this case, only doing one year at a time, so it is the end year, too
 			$startyear = $nyear[$i];
 			//range definitions and linear scaling lines for each range
 			//$xrange_ndx_array = array();

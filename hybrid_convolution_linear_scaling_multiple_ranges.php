@@ -30,8 +30,6 @@ function hybrid_convolution_linear_scaling_multiple_ranges($zone_grpval_array,
 		print_r($zone_grpval_array);
 		print_r($zone_gwcu_array);
 		print_r($zone_recharge_array);
-		print_r($subzone_gwcu_array);
-		print_r($subzone_recharge_array);
 	}
 	$result = array();
 	$excitation_counter=0;
@@ -225,5 +223,137 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_
 	}
 	return $result;
 }
+
+/*
+ * the hybrid method simply multiples a value (10 yr gwnetcu avg) time a 12 month time series of percentages
+ */
+function hybrid_method_multiple_ranges_subzone($zone_grpval_array,
+		$zone_gwcu_array, $zone_recharge_array, $subzone_gwcu_array, $subzone_recharge_array,
+		$response_arrays, $subtimestepcount=1, $grp_range_array) {
+	$debugging = false;
+	if ($debugging) {
+		print_r($zone_grpval_array);
+		print_r($zone_gwcu_array);
+		print_r($zone_recharge_array);
+		print_r($subzone_gwcu_array);
+		print_r($subzone_recharge_array);
+	}
+	$result = array();
+	$excitation_counter=0;
+	/*
+	 * loop through the annual time steps in the $zone_grpval_array array
+	 * assumes all the other arrays have the same time steps
+	 */
+	foreach ($zone_grpval_array as  $timestepindex=>$zone_grpval) {
+		$zone_netgwcu = $zone_gwcu_array[$timestepindex]-$zone_recharge_array[$timestepindex];
+		$subzone_netgwcu = $subzone_gwcu_array[$timestepindex]-$subzone_recharge_array[$timestepindex];
+		/*
+		 * first figure out which of the multiple response functions to use
+		 * based on this zone's grouping value (zone_grpval)
+		 * could be gwnetcu or streamflow ranges, for example,
+		 * (for rgdss, this is set up in the calibration phase)
+		 *  each range has it's own response function and linear scaling line
+		*/
+		$response_array=null;
+		/*
+		 * loop through the grouping ranges
+		 * the last one that contains the value, $zone_grpval, will be used
+		 * this determines which response function and response function line will be used
+		 */
+		foreach ($grp_range_array as $grp_range_ndx=>$grp_range) {
+			//print("$grp_range_ndx $grp_range[0] $grp_range[1] \n");
+			$min=$grp_range[0];
+			$max=$grp_range[1];
+			if (($zone_grpval>=$min)&&($zone_grpval<=$max)) {
+				$response_array=$response_arrays[$grp_range_ndx];
+			}
+		}
+		if (!(isset($response_array))) {
+			return null;
+		}
+
+		if (!$excitation_counter) {
+			$firsttimestepindex = $timestepindex;
+		}
+		$startingsubtimestep = ($timestepindex-$firsttimestepindex) * $subtimestepcount + 1;
+		$response_counter=0;
+		foreach ($response_array as $responseindex=>$responsevalue) {
+			// subtract 1 because the response array index is one based
+			if (array_key_exists ($startingsubtimestep+$responseindex-1,$result)) {
+				$result[$startingsubtimestep+$responseindex-1] += $responsevalue*$subzone_netgwcu;
+			} else {
+				$result[$startingsubtimestep+$responseindex-1] = $responsevalue*$subzone_netgwcu;
+			}
+			++$response_counter;
+		}
+		++$excitation_counter;
+	}
+	return $result;
+}
+
+/*
+ * the hybrid method simply multiples a value (10 yr gwnetcu avg) time a 12 month time series of percentages
+ */
+function hybrid_method_multiple_ranges($zone_grpval_array,
+		$zone_gwcu_array, $zone_recharge_array,
+		$response_arrays, $subtimestepcount=1, $grp_range_array) {
+	$debugging = false;
+	if ($debugging) {
+		print_r($zone_grpval_array);
+		print_r($zone_gwcu_array);
+		print_r($zone_recharge_array);
+	}
+	$result = array();
+	$excitation_counter=0;
+	/*
+	 * loop through the annual time steps in the $zone_grpval_array array
+	 * assumes all the other arrays have the same time steps
+	 */
+	foreach ($zone_grpval_array as  $timestepindex=>$zone_grpval) {
+		$zone_netgwcu = $zone_gwcu_array[$timestepindex]-$zone_recharge_array[$timestepindex];
+		/*
+		 * first figure out which of the multiple response functions to use
+		 * based on this zone's grouping value (zone_grpval)
+		 * could be gwnetcu or streamflow ranges, for example,
+		 * (for rgdss, this is set up in the calibration phase)
+		 *  each range has it's own response function and linear scaling line
+		*/
+		$response_array=null;
+		/*
+		 * loop through the grouping ranges
+		 * the last one that contains the value, $zone_grpval, will be used
+		 * this determines which response function and response function line will be used
+		 */
+		foreach ($grp_range_array as $grp_range_ndx=>$grp_range) {
+			//print("$grp_range_ndx $grp_range[0] $grp_range[1] \n");
+			$min=$grp_range[0];
+			$max=$grp_range[1];
+			if (($zone_grpval>=$min)&&($zone_grpval<=$max)) {
+				$response_array=$response_arrays[$grp_range_ndx];
+			}
+		}
+		if (!(isset($response_array))) {
+			return null;
+		}
+
+		if (!$excitation_counter) {
+			$firsttimestepindex = $timestepindex;
+		}
+		$startingsubtimestep = ($timestepindex-$firsttimestepindex) * $subtimestepcount + 1;
+		$response_counter=0;
+		foreach ($response_array as $responseindex=>$responsevalue) {
+			// subtract 1 because the response array index is one based
+			if (array_key_exists ($startingsubtimestep+$responseindex-1,$result)) {
+				$result[$startingsubtimestep+$responseindex-1] += $responsevalue*$zone_netgwcu;
+			} else {
+				$result[$startingsubtimestep+$responseindex-1] = $responsevalue*$zone_netgwcu;
+			}
+			++$response_counter;
+		}
+		++$excitation_counter;
+	}
+	return $result;
+}
+
 
 ?>

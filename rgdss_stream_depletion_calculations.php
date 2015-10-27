@@ -664,13 +664,13 @@ for ($i = 0; $i < $recordcount; $i++) {
 			if($rgresponsesubzone) {
 				$subzone_gwcu_array = array();
 				$subzone_recharge_array = array();
-				$subzone_gwcu_array[$nyear[$i]]=$subzone_gwcu_af[$i];
-				$subzone_recharge_array[$nyear[$i]]=$subzone_recharge_af[$i];
+				$subzone_gwcu_array[$nyear[$i]]=$subzone_gwcu_af[$i]*$streamflow_avg_af[$i];
+				$subzone_recharge_array[$nyear[$i]]=$subzone_recharge_af[$i]*$streamflow_avg_af[$i];
 			}
 			$zone_gwcu_array = array();
 			$zone_recharge_array = array();
-			$zone_gwcu_array[$nyear[$i]]=$zone_gwcu_af[$i];
-			$zone_recharge_array[$nyear[$i]]=$zone_recharge_af[$i];
+			$zone_gwcu_array[$nyear[$i]]=$zone_gwcu_af[$i]*$streamflow_avg_af[$i];
+			$zone_recharge_array[$nyear[$i]]=$zone_recharge_af[$i]*$streamflow_avg_af[$i];
 			// set up the grouping value
 			// for rgdss 2015, this should be the appropriate stream flow value (apr-sep total)
 			$zone_grpval_array = array();

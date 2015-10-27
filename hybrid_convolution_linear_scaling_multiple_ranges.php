@@ -230,7 +230,7 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_
 function hybrid_method_multiple_ranges_subzone($zone_grpval_array,
 		$zone_gwcu_array, $zone_recharge_array, $subzone_gwcu_array, $subzone_recharge_array,
 		$response_arrays, $subtimestepcount=1, $grp_range_array) {
-	$debugging = false;
+	$debugging = true;
 	if ($debugging) {
 		print_r($zone_grpval_array);
 		print_r($zone_gwcu_array);
@@ -271,7 +271,10 @@ function hybrid_method_multiple_ranges_subzone($zone_grpval_array,
 		if (!(isset($response_array))) {
 			return null;
 		}
-
+		if ($debugging) {
+			print_r($response_array);
+		}
+		
 		if (!$excitation_counter) {
 			$firsttimestepindex = $timestepindex;
 		}
@@ -297,7 +300,7 @@ function hybrid_method_multiple_ranges_subzone($zone_grpval_array,
 function hybrid_method_multiple_ranges($zone_grpval_array,
 		$zone_gwcu_array, $zone_recharge_array,
 		$response_arrays, $subtimestepcount=1, $grp_range_array) {
-	$debugging = false;
+	$debugging = true;
 	if ($debugging) {
 		print_r($zone_grpval_array);
 		print_r($zone_gwcu_array);
@@ -335,7 +338,10 @@ function hybrid_method_multiple_ranges($zone_grpval_array,
 		if (!(isset($response_array))) {
 			return null;
 		}
-
+		if ($debugging) {
+			print_r($response_array);
+		}
+		
 		if (!$excitation_counter) {
 			$firsttimestepindex = $timestepindex;
 		}

@@ -67,12 +67,12 @@ $options[RGRESPONSESUBZONE]=0; // 0, zone calculations only, 1 is RGCWUA, 2 is ?
  * the following should change based on the value of RGRESPONSESUBZONE
  * because the tables have a different structure!
  */
-if (RGRESPONSESUBZONE) {
-	$options[RGSTREAMDEPLETIONSCENARIOTABLE]="rg_subzone_stream_depletion_input_data_annual"; 
-	$options[RGSTREAMDEPLETIONDATATABLE]="rg_subzone_stream_depletion_output_data";
-} else {
+if (RGRESPONSESUBZONE>0) {
 	$options[RGSTREAMDEPLETIONSCENARIOTABLE]="rg_zone_stream_depletion_input_data_annual"; 
 	$options[RGSTREAMDEPLETIONDATATABLE]="rg_zone_stream_depletion_output_data";
+} else {
+	$options[RGSTREAMDEPLETIONSCENARIOTABLE]="rg_subzone_stream_depletion_input_data_annual"; 
+	$options[RGSTREAMDEPLETIONDATATABLE]="rg_subzone_stream_depletion_output_data";
 }
 /*
  * this should be dependent on the value of RGSTREAMDEPLETIONSCENARIO, but isn't yet - fix it!

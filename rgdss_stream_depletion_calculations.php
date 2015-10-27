@@ -609,7 +609,7 @@ for ($i = 0; $i < $recordcount; $i++) {
 	if ($debugging) {
 		echo "i $i year $nyear[$i] reach $nreach[$i] \n";
 	}
-	switch ($resp_fn_type[$recordcount]) {
+	switch ($resp_fn_type[$i]) {
 		case 2: // hybrid response function - 12 month pattern times average gwnetcu (10 yr)  
 			break;
 		case 1: // linear response function

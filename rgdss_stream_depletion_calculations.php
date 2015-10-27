@@ -62,7 +62,7 @@ $options[RGRESPFNDATATABLE]="rg_response_functions_linear_data";
 $options[RGHYBRIDTABLE]="rg_response_functions_hybrid";
 $options[RGHYBRIDDATATABLE]="rg_response_functions_hybrid_data";
 $options[RGCREDITMNTABLE]="rg_stream_depletion_credit_data";
-$options[RGRESPONSESUBZONE]=1; // 0, zone calculations only, 1 is RGCWUA, 2 is ???
+$options[RGRESPONSESUBZONE]=0; // 0, zone calculations only, 1 is RGCWUA, 2 is ???
 /*
  * the following should change based on the value of RGRESPONSESUBZONE
  * because the tables have a different structure!

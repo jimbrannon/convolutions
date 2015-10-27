@@ -431,7 +431,7 @@ if (strlen($rgrespfntable)) {
 	if ($debugging) echo "missing rgrespfntable exiting \n";
 	return;
 }
-// get the rgrespfntable arg
+// get the rgrespfndatatable arg
 if (array_key_exists(RGRESPFNDATATABLE,$options)) {
 	$rgrespfndatatable = trim($options[RGRESPFNDATATABLE]);
 } else {
@@ -454,6 +454,54 @@ if (strlen($rgrespfndatatable)) {
 	if ($debugging) echo "missing rgrespfndatatable exiting \n";
 	return;
 }
+
+// get the rghybridtable arg
+if (array_key_exists(RGHYBRIDTABLE,$options)) {
+	$rghybridtable = trim($options[RGHYBRIDTABLE]);
+} else {
+	// we can NOT set a default for this
+	$rghybridtable = ""; // set it to an invalid value and check later
+}
+if ($debugging) echo "rghybridtable default: $rghybridtable \n";
+$rghybridtable_arg = getargs (RGHYBRIDTABLE,$rghybridtable);
+if ($debugging) echo "rghybridtable_arg: $rghybridtable_arg \n";
+if (strlen($rghybridtable_arg=trim($rghybridtable_arg))) {
+	$rghybridtable = $rghybridtable_arg;
+}
+if (strlen($rghybridtable)) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rghybridtable: $rghybridtable \n";
+	$options[RGHYBRIDTABLE] = $rghybridtable;
+} else {
+	// can not proceed without this
+	if ($logging) echo "missing rghybridtable exiting \n";
+	if ($debugging) echo "missing rghybridtable exiting \n";
+	return;
+}
+// get the rghybriddatatable arg
+if (array_key_exists(RGHYBRIDDATATABLE,$options)) {
+	$rghybriddatatable = trim($options[RGHYBRIDDATATABLE]);
+} else {
+	// we can NOT set a default for this
+	$rghybriddatatable = ""; // set it to an invalid value and check later
+}
+if ($debugging) echo "rghybriddatatable default: $rghybriddatatable \n";
+$rghybriddatatable_arg = getargs (RGHYBRIDDATATABLE,$rghybriddatatable);
+if ($debugging) echo "rghybriddatatable_arg: $rghybriddatatable_arg \n";
+if (strlen($rghybriddatatable_arg=trim($rghybriddatatable_arg))) {
+	$rghybriddatatable = $rghybriddatatable_arg;
+}
+if (strlen($rghybriddatatable)) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rghybriddatatable: $rghybriddatatable \n";
+	$options[RGHYBRIDDATATABLE] = $rghybriddatatable;
+} else {
+	// can not proceed without this
+	if ($logging) echo "missing rghybriddatatable exiting \n";
+	if ($debugging) echo "missing rghybriddatatable exiting \n";
+	return;
+}
+
 // get the rgcreditmntable arg
 if (array_key_exists(RGCREDITMNTABLE,$options)) {
 	$rgcreditmntable = trim($options[RGCREDITMNTABLE]);

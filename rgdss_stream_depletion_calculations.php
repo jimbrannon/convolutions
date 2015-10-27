@@ -709,7 +709,7 @@ for ($i = 0; $i < $recordcount; $i++) {
 				$query .= " AND nreach=$rgstreamreach";
 				$query .= " AND nrspfn=$rgrespfnversion";
 				$query .= " AND group_ndx=$rggroup_ndx";
-				$query .= " ORDER BY timestep ASC";
+				$query .= " ORDER BY month_ndx ASC";
 				$results = pg_query($pgconnection, $query);
 				while ($row = pg_fetch_row($results)) {
 					$response_array[$row[0]] = $row[1];

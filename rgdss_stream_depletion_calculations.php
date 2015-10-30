@@ -545,7 +545,7 @@ $delete_array=array();
 $delete_array['model_version']=$rgmodelversion;
 $delete_array['nzone']=$rgresponsezone;
 if($rgresponsesubzone) {
-	$delete_array['nsubzone']=$rgresponsezone;
+	$delete_array['nsubzone']=$rgresponsesubzone;
 }
 $delete_array['nscenario']=$rgstreamdepletionscenario;
 pg_delete($pgconnection,$rgstreamdepletiondatatable,$delete_array);

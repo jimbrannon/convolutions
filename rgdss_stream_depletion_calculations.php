@@ -555,7 +555,7 @@ $subtimestepcount=$options[RGSUBTIMESTEPCOUNT];
 if($rgresponsesubzone) {
 	$query = "SELECT model_version, nzone, nsubzone, nreach, nscenario, nyear,";
 	$query .= " subzone_gwcu_af, subzone_recharge_af, zone_gwcu_af, zone_recharge_af, streamflow_aprsep_af,";
-	$query .= " grouping_type, streamflow_avg_af, resp_fn_type, resp_fn_ndx";
+	$query .= " grouping_type, adjustment_factor, resp_fn_type, resp_fn_ndx";
 	$query .= " FROM $rgstreamdepletionscenariotable";
 	$query .= " WHERE model_version=$rgmodelversion";
 	$query .= " AND nzone=$rgresponsezone";
@@ -565,7 +565,7 @@ if($rgresponsesubzone) {
 } else {
 	$query = "SELECT model_version, nzone, nreach, nscenario, nyear,";
 	$query .= " zone_gwcu_af, zone_recharge_af, streamflow_aprsep_af,";
-	$query .= " grouping_type, streamflow_avg_af, resp_fn_type, resp_fn_ndx";
+	$query .= " grouping_type, adjustment_factor, resp_fn_type, resp_fn_ndx";
 	$query .= " FROM $rgstreamdepletionscenariotable";
 	$query .= " WHERE model_version=$rgmodelversion";
 	$query .= " AND nzone=$rgresponsezone";
@@ -590,7 +590,7 @@ $zone_netgwcu_af=array();
 $zone_grpval=array();
 $streamflow_aprsep_af=array();
 $grouping_type=array();
-$streamflow_avg_af=array();
+$adjustment_factor=array();
 $resp_fn_type=array();
 $resp_fn_ndx=array();
 // loop through the records and save the values into arrays
@@ -610,6 +610,7 @@ while ($row = pg_fetch_row($results)) {
 		$zone_netgwcu_af[$recordcount]=$row[8]-$row[9];
 		$streamflow_aprsep_af[$recordcount]=$row[10];
 		$grouping_type[$recordcount]=$row[11];
+		// create a new array that stores the correct values to use for the grouping
 		switch ($grouping_type[$recordcount]) {
 			case 1: // gwnetcu
 				$zone_grpval[$recordcount]=$zone_netgwcu_af[$recordcount];
@@ -620,7 +621,7 @@ while ($row = pg_fetch_row($results)) {
 			default:
 				$zone_grpval[$recordcount]=$zone_netgwcu_af[$recordcount];
 		}
-		$streamflow_avg_af[$recordcount]=$row[12];
+		$adjustment_factor[$recordcount]=$row[12];
 		$resp_fn_type[$recordcount]=$row[13];
 		$resp_fn_ndx[$recordcount]=$row[14];
 	} else {
@@ -642,7 +643,7 @@ while ($row = pg_fetch_row($results)) {
 			default:
 				$zone_grpval[$recordcount]=$zone_netgwcu_af[$recordcount];
 		}
-		$streamflow_avg_af[$recordcount]=$row[9];
+		$adjustment_factor[$recordcount]=$row[9];
 		$resp_fn_type[$recordcount]=$row[10];
 		$resp_fn_ndx[$recordcount]=$row[11];
 	}
@@ -664,17 +665,19 @@ for ($i = 0; $i < $recordcount; $i++) {
 			if($rgresponsesubzone) {
 				$subzone_gwcu_array = array();
 				$subzone_recharge_array = array();
-				$subzone_gwcu_array[$nyear[$i]]=$subzone_gwcu_af[$i]*$streamflow_avg_af[$i];
-				$subzone_recharge_array[$nyear[$i]]=$subzone_recharge_af[$i]*$streamflow_avg_af[$i];
+				$subzone_gwcu_array[$nyear[$i]]=$subzone_gwcu_af[$i];
+				$subzone_recharge_array[$nyear[$i]]=$subzone_recharge_af[$i];
 			}
 			$zone_gwcu_array = array();
 			$zone_recharge_array = array();
-			$zone_gwcu_array[$nyear[$i]]=$zone_gwcu_af[$i]*$streamflow_avg_af[$i];
-			$zone_recharge_array[$nyear[$i]]=$zone_recharge_af[$i]*$streamflow_avg_af[$i];
+			$zone_gwcu_array[$nyear[$i]]=$zone_gwcu_af[$i];
+			$zone_recharge_array[$nyear[$i]]=$zone_recharge_af[$i];
 			// set up the grouping value
 			// for rgdss 2015, this should be the appropriate stream flow value (apr-sep total)
 			$zone_grpval_array = array();
 			$zone_grpval_array[$nyear[$i]]=$zone_grpval[$i];
+			//the adjustment factors to use in the hybrid method
+			$adjustment_factor_array[$nyear[$i]]=$adjustment_factor[$i];
 			//the starting year, in this case, only doing one year at a time, so it is the end year, too
 			$startyear = $nyear[$i];
 			// initialize arrays to hold the range definitions for each range
@@ -726,7 +729,8 @@ for ($i = 0; $i < $recordcount; $i++) {
 						$subzone_recharge_array, // should be 10 year avg
 						$response_arrays, // the monthly % of 10 yr avg arrays
 						$subtimestepcount, // in this case, should be 12
-						$group_range_array); // the range definitions (stream flows)
+						$group_range_array, // the range definitions (stream flows)
+						$adjustment_factor_array); // a scaling factor added to the hybrid stream depletion calculation method
 			} else {
 				$results = hybrid_method_multiple_ranges( // results come back indexed by the monthly time step index
 						$zone_grpval_array, // should be a stream flow
@@ -734,7 +738,8 @@ for ($i = 0; $i < $recordcount; $i++) {
 						$zone_recharge_array, // should be 10 year avg
 						$response_arrays, // the monthly % of 10 yr avg arrays
 						$subtimestepcount, // in this case, should be 12
-						$group_range_array); // the range definitions (stream flows)
+						$group_range_array, // the range definitions (stream flows)
+						$adjustment_factor_array); // a scaling factor added to the hybrid stream depletion calculation method
 			}
 			// save the stream depletion time series back to a pg table
 			if(count($results)) {
@@ -749,7 +754,7 @@ for ($i = 0; $i < $recordcount; $i++) {
 					$insert_array['nreach']=$rgstreamreach;
 					$insert_array['nyear']=$startyear;
 					$absolutetimestep = $ndx+($startyear-1900)*$subtimestepcount;
-					$insert_array['ntimestep'] = $absolutetimestep;
+					$insert_array['timestep'] = $absolutetimestep;
 					//if(array_key_exists($absolutetimestep,$credit_array)) {
 					//	$value += $credit_array[$absolutetimestep];
 					//}
@@ -864,7 +869,7 @@ for ($i = 0; $i < $recordcount; $i++) {
 					$insert_array['nreach']=$rgstreamreach;
 					$insert_array['nyear']=$startyear;
 					$absolutetimestep = $ndx+($startyear-1900)*$subtimestepcount;
-					$insert_array['ntimestep'] = $absolutetimestep;
+					$insert_array['timestep'] = $absolutetimestep;
 					//if(array_key_exists($absolutetimestep,$credit_array)) {
 					//	$value += $credit_array[$absolutetimestep];
 					//}

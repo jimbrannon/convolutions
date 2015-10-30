@@ -229,7 +229,7 @@ function hybrid_convolution_linear_scaling_multiple_ranges_subzone($zone_grpval_
  */
 function hybrid_method_multiple_ranges_subzone($zone_grpval_array,
 		$zone_gwcu_array, $zone_recharge_array, $subzone_gwcu_array, $subzone_recharge_array,
-		$response_arrays, $subtimestepcount=1, $grp_range_array) {
+		$response_arrays, $subtimestepcount=1, $grp_range_array, $adjustment_factor_array) {
 	$debugging = true;
 	if ($debugging) {
 		print_r($zone_grpval_array);
@@ -247,6 +247,7 @@ function hybrid_method_multiple_ranges_subzone($zone_grpval_array,
 	foreach ($zone_grpval_array as  $timestepindex=>$zone_grpval) {
 		$zone_netgwcu = $zone_gwcu_array[$timestepindex]-$zone_recharge_array[$timestepindex];
 		$subzone_netgwcu = $subzone_gwcu_array[$timestepindex]-$subzone_recharge_array[$timestepindex];
+		$adjustment_factor = $adjustment_factor_array[$timestepindex];
 		/*
 		 * first figure out which of the multiple response functions to use
 		 * based on this zone's grouping value (zone_grpval)
@@ -283,9 +284,9 @@ function hybrid_method_multiple_ranges_subzone($zone_grpval_array,
 		foreach ($response_array as $responseindex=>$responsevalue) {
 			// subtract 1 because the response array index is one based
 			if (array_key_exists ($startingsubtimestep+$responseindex-1,$result)) {
-				$result[$startingsubtimestep+$responseindex-1] += $responsevalue*$subzone_netgwcu;
+				$result[$startingsubtimestep+$responseindex-1] += $responsevalue*$subzone_netgwcu*$adjustment_factor;
 			} else {
-				$result[$startingsubtimestep+$responseindex-1] = $responsevalue*$subzone_netgwcu;
+				$result[$startingsubtimestep+$responseindex-1] = $responsevalue*$subzone_netgwcu*$adjustment_factor;
 			}
 			++$response_counter;
 		}
@@ -299,7 +300,7 @@ function hybrid_method_multiple_ranges_subzone($zone_grpval_array,
  */
 function hybrid_method_multiple_ranges($zone_grpval_array,
 		$zone_gwcu_array, $zone_recharge_array,
-		$response_arrays, $subtimestepcount=1, $grp_range_array) {
+		$response_arrays, $subtimestepcount=1, $grp_range_array, $adjustment_factor_array) {
 	$debugging = true;
 	if ($debugging) {
 		print_r($zone_grpval_array);
@@ -314,6 +315,7 @@ function hybrid_method_multiple_ranges($zone_grpval_array,
 	 */
 	foreach ($zone_grpval_array as  $timestepindex=>$zone_grpval) {
 		$zone_netgwcu = $zone_gwcu_array[$timestepindex]-$zone_recharge_array[$timestepindex];
+		$adjustment_factor = $adjustment_factor_array[$timestepindex];
 		/*
 		 * first figure out which of the multiple response functions to use
 		 * based on this zone's grouping value (zone_grpval)
@@ -350,9 +352,9 @@ function hybrid_method_multiple_ranges($zone_grpval_array,
 		foreach ($response_array as $responseindex=>$responsevalue) {
 			// subtract 1 because the response array index is one based
 			if (array_key_exists ($startingsubtimestep+$responseindex-1,$result)) {
-				$result[$startingsubtimestep+$responseindex-1] += $responsevalue*$zone_netgwcu;
+				$result[$startingsubtimestep+$responseindex-1] += $responsevalue*$zone_netgwcu*$adjustment_factor;
 			} else {
-				$result[$startingsubtimestep+$responseindex-1] = $responsevalue*$zone_netgwcu;
+				$result[$startingsubtimestep+$responseindex-1] = $responsevalue*$zone_netgwcu*$adjustment_factor;
 			}
 			++$response_counter;
 		}

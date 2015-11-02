@@ -767,27 +767,6 @@ for ($i = 0; $i < $recordcount; $i++) {
 						$adjustment_factor_array); // a scaling factor added to the hybrid stream depletion calculation method
 			}
 
-			// get the stream credit array
-			$stream_credit_array = array();
-			$query = "SELECT timestep,value";
-			if($rgresponsesubzone) {
-				$query .= " FROM $rgsubzonecreditmntable";
-			} else {
-				$query .= " FROM $rgzonecreditmntable";
-			}
-			$query .= " WHERE model_version=$rgmodelversion";
-			$query .= " AND nzone=$rgresponsezone";
-			if($rgresponsesubzone) {
-				$query .= " AND nsubzone=$rgresponsesubzone";
-			}
-			$query .= " AND nreach=$rgstreamreach";
-			$query .= " AND nscenario=$rgcreditmnversion";
-			$query .= " ORDER BY timestep ASC";
-			$creditresults = pg_query($pgconnection, $query);
-			while ($row = pg_fetch_row($creditresults)) {
-				$stream_credit_array[$row[0]] = $row[1];
-			}
-				
 			// save the stream depletion time series back to a pg table
 			if(count($results)) {
 				foreach ($results as $ndx=>$value) {
@@ -802,9 +781,6 @@ for ($i = 0; $i < $recordcount; $i++) {
 					$insert_array['nyear']=$startyear;
 					$absolutetimestep = $ndx+($startyear-1900)*$subtimestepcount;
 					$insert_array['timestep'] = $absolutetimestep;
-					if(array_key_exists($absolutetimestep,$stream_credit_array)) {
-						$value += $stream_credit_array[$absolutetimestep];
-					}
 					$insert_array['depletion_af'] = $value;
 					pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
 				}
@@ -903,27 +879,6 @@ for ($i = 0; $i < $recordcount; $i++) {
 						$group_range_array);
 			}
 			
-			// get the stream credit array
-			$stream_credit_array = array();
-			$query = "SELECT timestep,value";
-			if($rgresponsesubzone) {
-				$query .= " FROM $rgsubzonecreditmntable";
-			} else {
-				$query .= " FROM $rgzonecreditmntable";
-			}
-			$query .= " WHERE model_version=$rgmodelversion";
-			$query .= " AND nzone=$rgresponsezone";
-			if($rgresponsesubzone) {
-				$query .= " AND nsubzone=$rgresponsesubzone";
-			}
-			$query .= " AND nreach=$rgstreamreach";
-			$query .= " AND nscenario=$rgcreditmnversion";
-			$query .= " ORDER BY timestep ASC";
-			$creditresults = pg_query($pgconnection, $query);
-			while ($row = pg_fetch_row($creditresults)) {
-				$stream_credit_array[$row[0]] = $row[1];
-			}
-			
 			// save the stream depletion time series back to a pg table
 			if(count($results)) {
 				foreach ($results as $ndx=>$value) {
@@ -938,9 +893,6 @@ for ($i = 0; $i < $recordcount; $i++) {
 					$insert_array['nyear']=$startyear;
 					$absolutetimestep = $ndx+($startyear-1900)*$subtimestepcount;
 					$insert_array['timestep'] = $absolutetimestep;
-					if(array_key_exists($absolutetimestep,$stream_credit_array)) {
-						$value += $stream_credit_array[$absolutetimestep];
-					}
 					$insert_array['depletion_af'] = $value;
 					pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
 				}
@@ -949,5 +901,42 @@ for ($i = 0; $i < $recordcount; $i++) {
 	}
 }
 
+/*
+ * finally, put the stream credits back into the output data table
+ * put them in this table with year=0
+ * this is a temporary hack until the graphing queries
+ * and gviz graphs can handle them separately 
+ */
+// get the stream credit array
+$results = array();
+$query = "SELECT timestep,value";
+if($rgresponsesubzone) {
+	$query .= " FROM $rgsubzonecreditmntable";
+} else {
+	$query .= " FROM $rgzonecreditmntable";
+}
+$query .= " WHERE model_version=$rgmodelversion";
+$query .= " AND nzone=$rgresponsezone";
+if($rgresponsesubzone) {
+	$query .= " AND nsubzone=$rgresponsesubzone";
+}
+$query .= " AND nreach=$rgstreamreach";
+$query .= " AND nscenario=$rgcreditmnversion";
+$query .= " ORDER BY timestep ASC";
+results = pg_query($pgconnection, $query);
+while ($row = pg_fetch_row($results)) {
+	$insert_array=array();
+	$insert_array['model_version']=$rgmodelversion;
+	$insert_array['nzone']=$rgresponsezone;
+	if($rgresponsesubzone) {
+		$insert_array['nsubzone']=$rgresponsesubzone;
+	}
+	$insert_array['nscenario']=$rgstreamdepletionscenario;
+	$insert_array['nreach']=$rgstreamreach;
+	$insert_array['nyear']=0; //this is a temporary hack!
+	$insert_array['timestep'] = $row[0];
+	$insert_array['depletion_af'] = -$row[1]; // put stream credits in as a negative stream depletion
+	pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
+}
 
 ?>

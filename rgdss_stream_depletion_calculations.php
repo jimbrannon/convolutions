@@ -27,7 +27,8 @@ define("RGSUBTIMESTEPCOUNT","rgsubtimestepcount");
 
 define("RGSTREAMDEPLETIONSCENARIOTABLE","rgstreamdepletionscenariotable");
 define("RGSTREAMDEPLETIONDATATABLE","rgstreamdepletiondatatable");
-define("RGCREDITMNTABLE","rgcreditmntable");
+define("RGZONECREDITMNTABLE","rgzonecreditmntable");
+define("RGSUBZONECREDITMNTABLE","rgsubzonecreditmntable");
 define("RGRESPFNTABLE","rgrespfntable");
 define("RGRESPFNDATATABLE","rgrespfndatatable");
 define("RGHYBRIDTABLE","rghybridtable");
@@ -53,15 +54,16 @@ $options[PGPORT]=5432;
  * (set by the value of RGRESPONSESUBZONE)
  */
 $options[RGMODELVERSION]=6; // 4 is 6P97, 5 is 6P98, 6 is 6P98final
-$options[RGRESPONSEZONE]=6; // 1 is SD1 confined gw, 2 is SD2 alluvial gw, 3 is Conejos, etc.
-$options[RGSTREAMDEPLETIONSCENARIO]=1; // 1 gw model data & time period, 2 is ARP 2015 data & time period, 3 is ARP 2016 data & time period, etc.
+$options[RGRESPONSEZONE]=2; // 1 is SD1 confined gw, 2 is SD2 alluvial gw, 3 is Conejos, etc.
+$options[RGSTREAMDEPLETIONSCENARIO]=2; // 1 gw model data & time period, 2 is ARP 2015 data & time period, 3 is ARP 2016 data & time period, etc.
 // note that the pumping years and affected stream reaches (as well as other data) are defined by the records associated with the previous scenario value
 $options[RGSUBTIMESTEPCOUNT]=12; // 12 would be the usual, years to months
 $options[RGRESPFNTABLE]="rg_response_functions_linear";
 $options[RGRESPFNDATATABLE]="rg_response_functions_linear_data";
 $options[RGHYBRIDTABLE]="rg_response_functions_hybrid";
 $options[RGHYBRIDDATATABLE]="rg_response_functions_hybrid_data";
-$options[RGCREDITMNTABLE]="rg_stream_depletion_credit_data";
+$options[RGZONECREDITMNTABLE]="rg_zone_stream_depletion_credit_data";
+$options[RGSUBZONECREDITMNTABLE]="rg_subzone_stream_depletion_credit_data";
 $options[RGRESPONSESUBZONE]=1; // 0, zone calculations only, 1 is RGCWUA, 2 is ???
 /*
  * the following should change based on the value of RGRESPONSESUBZONE
@@ -337,6 +339,29 @@ if ($rgmodelversion > 0) {
 	// can not proceed without this
     if ($logging) echo "invalid rgmodelversion: $rgmodelversion exiting \n";
 	if ($debugging) echo "invalid rgmodelversion: $rgmodelversion exiting \n";
+	return;
+}
+// get the rg zone stream depletion credit monthly data version arg
+if (array_key_exists(RGCREDITMNVERSION,$options)) {
+	$rgcreditmnversion = $options[RGCREDITMNVERSION];
+} else {
+	// we can not set a default for this
+	$rgcreditmnversion = 0; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgcreditmnversion default: $rgcreditmnversion \n";
+$rgcreditmnversion_arg = getargs (RGCREDITMNVERSION,$rgcreditmnversion);
+if ($debugging) echo "rgcreditmnversion_arg: $rgcreditmnversion_arg \n";
+if (strlen($rgcreditmnversion_arg=trim($rgcreditmnversion_arg))) {
+	$rgcreditmnversion = intval($rgcreditmnversion_arg);
+}
+if ($rgcreditmnversion > 0) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgcreditmnversion: $rgcreditmnversion \n";
+	$options[RGCREDITMNVERSION] = $rgcreditmnversion;
+} else {
+	// can not proceed without this
+    if ($logging) echo "invalid rgcreditmnversion: $rgcreditmnversion exiting \n";
+	if ($debugging) echo "invalid rgcreditmnversion: $rgcreditmnversion exiting \n";
 	return;
 }
 // get the rg stream depletion credit monthly data version arg

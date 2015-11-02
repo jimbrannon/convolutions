@@ -55,8 +55,11 @@ $options[PGPORT]=5432;
  */
 $options[RGMODELVERSION]=6; // 4 is 6P97, 5 is 6P98, 6 is 6P98final
 $options[RGRESPONSEZONE]=2; // 1 is SD1 confined gw, 2 is SD2 alluvial gw, 3 is Conejos, etc.
-$options[RGSTREAMDEPLETIONSCENARIO]=2; // 1 gw model data & time period, 2 is ARP 2015 data & time period, 3 is ARP 2016 data & time period, etc.
+$options[RGSTREAMDEPLETIONSCENARIO]=1; // 1 gw model data & time period, 2 is ARP 2015 data & time period, 3 is ARP 2016 data & time period, etc.
 // note that the pumping years and affected stream reaches (as well as other data) are defined by the records associated with the previous scenario value
+// right now the following version index should be the same value as RGSTREAMDEPLETIONSCENARIO, and have data to match the same time period
+$options[RGCREDITMNVERSION]=1;
+
 $options[RGSUBTIMESTEPCOUNT]=12; // 12 would be the usual, years to months
 $options[RGRESPFNTABLE]="rg_response_functions_linear";
 $options[RGRESPFNDATATABLE]="rg_response_functions_linear_data";
@@ -64,7 +67,7 @@ $options[RGHYBRIDTABLE]="rg_response_functions_hybrid";
 $options[RGHYBRIDDATATABLE]="rg_response_functions_hybrid_data";
 $options[RGZONECREDITMNTABLE]="rg_zone_stream_depletion_credit_data";
 $options[RGSUBZONECREDITMNTABLE]="rg_subzone_stream_depletion_credit_data";
-$options[RGRESPONSESUBZONE]=1; // 0, zone calculations only, 1 is RGCWUA, 2 is ???
+$options[RGRESPONSESUBZONE]=0; // 0, zone calculations only, 1 is RGCWUA, 2 is ???
 /*
  * the following should change based on the value of RGRESPONSESUBZONE
  * because the tables have a different structure!
@@ -76,10 +79,6 @@ if ($options[RGRESPONSESUBZONE]) {
 	$options[RGSTREAMDEPLETIONSCENARIOTABLE]="rg_zone_stream_depletion_input_data_annual"; 
 	$options[RGSTREAMDEPLETIONDATATABLE]="rg_zone_stream_depletion_output_data";
 }
-/*
- * this should be dependent on the value of RGSTREAMDEPLETIONSCENARIO, but isn't yet - fix it!
- */
-$options[RGCREDITMNVERSION]=1;
 
 /*
  * handle the args right here in the wrapper
@@ -923,7 +922,7 @@ if($rgresponsesubzone) {
 $query .= " AND nreach=$rgstreamreach";
 $query .= " AND nscenario=$rgcreditmnversion";
 $query .= " ORDER BY timestep ASC";
-results = pg_query($pgconnection, $query);
+$results = pg_query($pgconnection, $query);
 while ($row = pg_fetch_row($results)) {
 	$insert_array=array();
 	$insert_array['model_version']=$rgmodelversion;

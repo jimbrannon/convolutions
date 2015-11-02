@@ -27,6 +27,8 @@ define("RGSUBTIMESTEPCOUNT","rgsubtimestepcount");
 
 define("RGSTREAMDEPLETIONSCENARIOTABLE","rgstreamdepletionscenariotable");
 define("RGSTREAMDEPLETIONDATATABLE","rgstreamdepletiondatatable");
+define("RGZONECREDITVERTABLE","rgzonecreditvertable");
+define("RGSUBZONECREDITVERTABLE","rgsubzonecreditvertable");
 define("RGZONECREDITMNTABLE","rgzonecreditmntable");
 define("RGSUBZONECREDITMNTABLE","rgsubzonecreditmntable");
 define("RGRESPFNTABLE","rgrespfntable");
@@ -65,6 +67,8 @@ $options[RGRESPFNTABLE]="rg_response_functions_linear";
 $options[RGRESPFNDATATABLE]="rg_response_functions_linear_data";
 $options[RGHYBRIDTABLE]="rg_response_functions_hybrid";
 $options[RGHYBRIDDATATABLE]="rg_response_functions_hybrid_data";
+$options[RGZONECREDITVERTABLE]="rg_zone_stream_depletion_credit_scenarios";
+$options[RGSUBZONECREDITVERTABLE]="rg_subzone_stream_depletion_credit_scenarios";
 $options[RGZONECREDITMNTABLE]="rg_zone_stream_depletion_credit_data";
 $options[RGSUBZONECREDITMNTABLE]="rg_subzone_stream_depletion_credit_data";
 $options[RGRESPONSESUBZONE]=1; // 0, zone calculations only, 1 is RGCWUA, 2 is ???
@@ -550,6 +554,53 @@ if (strlen($rgsubzonecreditmntable)) {
 	return;
 }
 
+// get the rgzonecreditvertable arg
+if (array_key_exists(RGZONECREDITVERTABLE,$options)) {
+	$rgzonecreditvertable = trim($options[RGZONECREDITVERTABLE]);
+} else {
+	// we can NOT set a default for this
+	$rgzonecreditvertable = ""; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgzonecreditvertable default: $rgzonecreditvertable \n";
+$rgzonecreditvertable_arg = getargs (RGZONECREDITVERTABLE,$rgzonecreditvertable);
+if ($debugging) echo "rgzonecreditvertable_arg: $rgzonecreditvertable_arg \n";
+if (strlen($rgzonecreditvertable_arg=trim($rgzonecreditvertable_arg))) {
+	$rgzonecreditvertable = $rgzonecreditvertable_arg;
+}
+if (strlen($rgzonecreditvertable)) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgzonecreditvertable: $rgzonecreditvertable \n";
+	$options[RGZONECREDITVERTABLE] = $rgzonecreditvertable;
+} else {
+	// can not proceed without this
+	if ($logging) echo "missing rgzonecreditvertable exiting \n";
+	if ($debugging) echo "missing rgzonecreditvertable exiting \n";
+	return;
+}
+// get the rgsubzonecreditvertable arg
+if (array_key_exists(RGSUBZONECREDITVERTABLE,$options)) {
+	$rgsubzonecreditvertable = trim($options[RGSUBZONECREDITVERTABLE]);
+} else {
+	// we can NOT set a default for this
+	$rgsubzonecreditvertable = ""; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgsubzonecreditvertable default: $rgsubzonecreditvertable \n";
+$rgsubzonecreditvertable_arg = getargs (RGSUBZONECREDITVERTABLE,$rgsubzonecreditvertable);
+if ($debugging) echo "rgsubzonecreditvertable_arg: $rgsubzonecreditvertable_arg \n";
+if (strlen($rgsubzonecreditvertable_arg=trim($rgsubzonecreditvertable_arg))) {
+	$rgsubzonecreditvertable = $rgsubzonecreditvertable_arg;
+}
+if (strlen($rgsubzonecreditvertable)) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgsubzonecreditvertable: $rgsubzonecreditvertable \n";
+	$options[RGSUBZONECREDITVERTABLE] = $rgsubzonecreditvertable;
+} else {
+	// can not proceed without this
+	if ($logging) echo "missing rgsubzonecreditvertable exiting \n";
+	if ($debugging) echo "missing rgsubzonecreditvertable exiting \n";
+	return;
+}
+
 /*
  * set up the excitation array
  * get the all the necessary data from the zone's stream depletion input data records for this "scenario"
@@ -906,36 +957,50 @@ for ($i = 0; $i < $recordcount; $i++) {
  * this is a temporary hack until the graphing queries
  * and gviz graphs can handle them separately 
  */
-// get the stream credit array
-$results = array();
-$query = "SELECT timestep,value";
-if($rgresponsesubzone) {
-	$query .= " FROM $rgsubzonecreditmntable";
-} else {
-	$query .= " FROM $rgzonecreditmntable";
-}
+// get the stream credit scenario data
+$query = "SELECT nreach";
+$query .= " FROM $rgsubzonecreditvertable";
 $query .= " WHERE model_version=$rgmodelversion";
 $query .= " AND nzone=$rgresponsezone";
 if($rgresponsesubzone) {
 	$query .= " AND nsubzone=$rgresponsesubzone";
 }
-$query .= " AND nreach=$rgstreamreach";
 $query .= " AND nscenario=$rgcreditmnversion";
-$query .= " ORDER BY timestep ASC";
+$query .= " ORDER BY nreach";
 $results = pg_query($pgconnection, $query);
 while ($row = pg_fetch_row($results)) {
-	$insert_array=array();
-	$insert_array['model_version']=$rgmodelversion;
-	$insert_array['nzone']=$rgresponsezone;
+	$rgstreamreach = row[0];
+	// get the stream credit array for this reach for this scenario
+	$creditresults = array();
+	$query = "SELECT timestep,value";
 	if($rgresponsesubzone) {
-		$insert_array['nsubzone']=$rgresponsesubzone;
+		$query .= " FROM $rgsubzonecreditmntable";
+	} else {
+		$query .= " FROM $rgzonecreditmntable";
 	}
-	$insert_array['nscenario']=$rgstreamdepletionscenario;
-	$insert_array['nreach']=$rgstreamreach;
-	$insert_array['nyear']=0; //this is a temporary hack!
-	$insert_array['timestep'] = $row[0];
-	$insert_array['depletion_af'] = -$row[1]; // put stream credits in as a negative stream depletion
-	pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
+	$query .= " WHERE model_version=$rgmodelversion";
+	$query .= " AND nzone=$rgresponsezone";
+	if($rgresponsesubzone) {
+		$query .= " AND nsubzone=$rgresponsesubzone";
+	}
+	$query .= " AND nreach=$rgstreamreach";
+	$query .= " AND nscenario=$rgcreditmnversion";
+	$query .= " ORDER BY timestep ASC";
+	$creditresults = pg_query($pgconnection, $query);
+	while ($row = pg_fetch_row($creditresults)) {
+		$insert_array=array();
+		$insert_array['model_version']=$rgmodelversion;
+		$insert_array['nzone']=$rgresponsezone;
+		if($rgresponsesubzone) {
+			$insert_array['nsubzone']=$rgresponsesubzone;
+		}
+		$insert_array['nscenario']=$rgstreamdepletionscenario;
+		$insert_array['nreach']=$rgstreamreach;
+		$insert_array['nyear']=0; //this is a temporary hack!
+		$insert_array['timestep'] = $row[0];
+		$insert_array['depletion_af'] = -$row[1]; // put stream credits in as a negative stream depletion
+		pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
+	}
 }
 
 ?>

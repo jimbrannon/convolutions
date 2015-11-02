@@ -341,29 +341,6 @@ if ($rgmodelversion > 0) {
 	if ($debugging) echo "invalid rgmodelversion: $rgmodelversion exiting \n";
 	return;
 }
-// get the rg zone stream depletion credit monthly data version arg
-if (array_key_exists(RGCREDITMNVERSION,$options)) {
-	$rgcreditmnversion = $options[RGCREDITMNVERSION];
-} else {
-	// we can not set a default for this
-	$rgcreditmnversion = 0; // set it to an invalid value and check later
-}
-if ($debugging) echo "rgcreditmnversion default: $rgcreditmnversion \n";
-$rgcreditmnversion_arg = getargs (RGCREDITMNVERSION,$rgcreditmnversion);
-if ($debugging) echo "rgcreditmnversion_arg: $rgcreditmnversion_arg \n";
-if (strlen($rgcreditmnversion_arg=trim($rgcreditmnversion_arg))) {
-	$rgcreditmnversion = intval($rgcreditmnversion_arg);
-}
-if ($rgcreditmnversion > 0) {
-	// a potentially valid value, use it
-	if ($debugging) echo "final rgcreditmnversion: $rgcreditmnversion \n";
-	$options[RGCREDITMNVERSION] = $rgcreditmnversion;
-} else {
-	// can not proceed without this
-    if ($logging) echo "invalid rgcreditmnversion: $rgcreditmnversion exiting \n";
-	if ($debugging) echo "invalid rgcreditmnversion: $rgcreditmnversion exiting \n";
-	return;
-}
 // get the rg stream depletion credit monthly data version arg
 if (array_key_exists(RGCREDITMNVERSION,$options)) {
 	$rgcreditmnversion = $options[RGCREDITMNVERSION];
@@ -527,27 +504,50 @@ if (strlen($rghybriddatatable)) {
 	return;
 }
 
-// get the rgcreditmntable arg
-if (array_key_exists(RGCREDITMNTABLE,$options)) {
-	$rgcreditmntable = trim($options[RGCREDITMNTABLE]);
+// get the rgzonecreditmntable arg
+if (array_key_exists(RGZONECREDITMNTABLE,$options)) {
+	$rgzonecreditmntable = trim($options[RGZONECREDITMNTABLE]);
 } else {
 	// we can NOT set a default for this
-	$rgcreditmntable = ""; // set it to an invalid value and check later
+	$rgzonecreditmntable = ""; // set it to an invalid value and check later
 }
-if ($debugging) echo "rgcreditmntable default: $rgcreditmntable \n";
-$rgcreditmntable_arg = getargs (RGCREDITMNTABLE,$rgcreditmntable);
-if ($debugging) echo "rgcreditmntable_arg: $rgcreditmntable_arg \n";
-if (strlen($rgcreditmntable_arg=trim($rgcreditmntable_arg))) {
-	$rgcreditmntable = $rgcreditmntable_arg;
+if ($debugging) echo "rgzonecreditmntable default: $rgzonecreditmntable \n";
+$rgzonecreditmntable_arg = getargs (RGZONECREDITMNTABLE,$rgzonecreditmntable);
+if ($debugging) echo "rgzonecreditmntable_arg: $rgzonecreditmntable_arg \n";
+if (strlen($rgzonecreditmntable_arg=trim($rgzonecreditmntable_arg))) {
+	$rgzonecreditmntable = $rgzonecreditmntable_arg;
 }
-if (strlen($rgcreditmntable)) {
+if (strlen($rgzonecreditmntable)) {
 	// a potentially valid value, use it
-	if ($debugging) echo "final rgcreditmntable: $rgcreditmntable \n";
-	$options[RGCREDITMNTABLE] = $rgcreditmntable;
+	if ($debugging) echo "final rgzonecreditmntable: $rgzonecreditmntable \n";
+	$options[RGZONECREDITMNTABLE] = $rgzonecreditmntable;
 } else {
 	// can not proceed without this
-	if ($logging) echo "missing rgcreditmntable exiting \n";
-	if ($debugging) echo "missing rgcreditmntable exiting \n";
+	if ($logging) echo "missing rgzonecreditmntable exiting \n";
+	if ($debugging) echo "missing rgzonecreditmntable exiting \n";
+	return;
+}
+// get the rgsubzonecreditmntable arg
+if (array_key_exists(RGSUBZONECREDITMNTABLE,$options)) {
+	$rgsubzonecreditmntable = trim($options[RGSUBZONECREDITMNTABLE]);
+} else {
+	// we can NOT set a default for this
+	$rgsubzonecreditmntable = ""; // set it to an invalid value and check later
+}
+if ($debugging) echo "rgsubzonecreditmntable default: $rgsubzonecreditmntable \n";
+$rgsubzonecreditmntable_arg = getargs (RGSUBZONECREDITMNTABLE,$rgsubzonecreditmntable);
+if ($debugging) echo "rgsubzonecreditmntable_arg: $rgsubzonecreditmntable_arg \n";
+if (strlen($rgsubzonecreditmntable_arg=trim($rgsubzonecreditmntable_arg))) {
+	$rgsubzonecreditmntable = $rgsubzonecreditmntable_arg;
+}
+if (strlen($rgsubzonecreditmntable)) {
+	// a potentially valid value, use it
+	if ($debugging) echo "final rgsubzonecreditmntable: $rgsubzonecreditmntable \n";
+	$options[RGSUBZONECREDITMNTABLE] = $rgsubzonecreditmntable;
+} else {
+	// can not proceed without this
+	if ($logging) echo "missing rgsubzonecreditmntable exiting \n";
+	if ($debugging) echo "missing rgsubzonecreditmntable exiting \n";
 	return;
 }
 
@@ -766,6 +766,28 @@ for ($i = 0; $i < $recordcount; $i++) {
 						$group_range_array, // the range definitions (stream flows)
 						$adjustment_factor_array); // a scaling factor added to the hybrid stream depletion calculation method
 			}
+
+			// get the stream credit array
+			$stream_credit_array = array();
+			$query = "SELECT timestep,value";
+			if($rgresponsesubzone) {
+				$query .= " FROM $rgsubzonecreditmntable";
+			} else {
+				$query .= " FROM $rgzonecreditmntable";
+			}
+			$query .= " WHERE model_version=$rgmodelversion";
+			$query .= " AND nzone=$rgresponsezone";
+			if($rgresponsesubzone) {
+				$query .= " AND nsubzone=$rgresponsesubzone";
+			}
+			$query .= " AND nreach=$rgstreamreach";
+			$query .= " AND nscenario=$rgcreditmnversion";
+			$query .= " ORDER BY timestep ASC";
+			$creditresults = pg_query($pgconnection, $query);
+			while ($row = pg_fetch_row($creditresults)) {
+				$stream_credit_array[$row[0]] = $row[1];
+			}
+				
 			// save the stream depletion time series back to a pg table
 			if(count($results)) {
 				foreach ($results as $ndx=>$value) {
@@ -780,9 +802,9 @@ for ($i = 0; $i < $recordcount; $i++) {
 					$insert_array['nyear']=$startyear;
 					$absolutetimestep = $ndx+($startyear-1900)*$subtimestepcount;
 					$insert_array['timestep'] = $absolutetimestep;
-					//if(array_key_exists($absolutetimestep,$credit_array)) {
-					//	$value += $credit_array[$absolutetimestep];
-					//}
+					if(array_key_exists($absolutetimestep,$stream_credit_array)) {
+						$value += $stream_credit_array[$absolutetimestep];
+					}
 					$insert_array['depletion_af'] = $value;
 					pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
 				}
@@ -881,6 +903,27 @@ for ($i = 0; $i < $recordcount; $i++) {
 						$group_range_array);
 			}
 			
+			// get the stream credit array
+			$stream_credit_array = array();
+			$query = "SELECT timestep,value";
+			if($rgresponsesubzone) {
+				$query .= " FROM $rgsubzonecreditmntable";
+			} else {
+				$query .= " FROM $rgzonecreditmntable";
+			}
+			$query .= " WHERE model_version=$rgmodelversion";
+			$query .= " AND nzone=$rgresponsezone";
+			if($rgresponsesubzone) {
+				$query .= " AND nsubzone=$rgresponsesubzone";
+			}
+			$query .= " AND nreach=$rgstreamreach";
+			$query .= " AND nscenario=$rgcreditmnversion";
+			$query .= " ORDER BY timestep ASC";
+			$creditresults = pg_query($pgconnection, $query);
+			while ($row = pg_fetch_row($creditresults)) {
+				$stream_credit_array[$row[0]] = $row[1];
+			}
+			
 			// save the stream depletion time series back to a pg table
 			if(count($results)) {
 				foreach ($results as $ndx=>$value) {
@@ -895,9 +938,9 @@ for ($i = 0; $i < $recordcount; $i++) {
 					$insert_array['nyear']=$startyear;
 					$absolutetimestep = $ndx+($startyear-1900)*$subtimestepcount;
 					$insert_array['timestep'] = $absolutetimestep;
-					//if(array_key_exists($absolutetimestep,$credit_array)) {
-					//	$value += $credit_array[$absolutetimestep];
-					//}
+					if(array_key_exists($absolutetimestep,$stream_credit_array)) {
+						$value += $stream_credit_array[$absolutetimestep];
+					}
 					$insert_array['depletion_af'] = $value;
 					pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
 				}

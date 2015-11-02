@@ -55,10 +55,10 @@ $options[PGPORT]=5432;
  */
 $options[RGMODELVERSION]=6; // 4 is 6P97, 5 is 6P98, 6 is 6P98final
 $options[RGRESPONSEZONE]=2; // 1 is SD1 confined gw, 2 is SD2 alluvial gw, 3 is Conejos, etc.
-$options[RGSTREAMDEPLETIONSCENARIO]=1; // 1 gw model data & time period, 2 is ARP 2015 data & time period, 3 is ARP 2016 data & time period, etc.
+$options[RGSTREAMDEPLETIONSCENARIO]=2; // 1 gw model data & time period, 2 is ARP 2015 data & time period, 3 is ARP 2016 data & time period, etc.
 // note that the pumping years and affected stream reaches (as well as other data) are defined by the records associated with the previous scenario value
 // right now the following version index should be the same value as RGSTREAMDEPLETIONSCENARIO, and have data to match the same time period
-$options[RGCREDITMNVERSION]=1;
+$options[RGCREDITMNVERSION]=2;
 
 $options[RGSUBTIMESTEPCOUNT]=12; // 12 would be the usual, years to months
 $options[RGRESPFNTABLE]="rg_response_functions_linear";
@@ -67,7 +67,7 @@ $options[RGHYBRIDTABLE]="rg_response_functions_hybrid";
 $options[RGHYBRIDDATATABLE]="rg_response_functions_hybrid_data";
 $options[RGZONECREDITMNTABLE]="rg_zone_stream_depletion_credit_data";
 $options[RGSUBZONECREDITMNTABLE]="rg_subzone_stream_depletion_credit_data";
-$options[RGRESPONSESUBZONE]=0; // 0, zone calculations only, 1 is RGCWUA, 2 is ???
+$options[RGRESPONSESUBZONE]=1; // 0, zone calculations only, 1 is RGCWUA, 2 is ???
 /*
  * the following should change based on the value of RGRESPONSESUBZONE
  * because the tables have a different structure!

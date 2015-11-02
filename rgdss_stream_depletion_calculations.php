@@ -969,7 +969,7 @@ $query .= " AND nscenario=$rgcreditmnversion";
 $query .= " ORDER BY nreach";
 $results = pg_query($pgconnection, $query);
 while ($row = pg_fetch_row($results)) {
-	$rgstreamreach = row[0];
+	$rgstreamreach = $row[0];
 	// get the stream credit array for this reach for this scenario
 	$creditresults = array();
 	$query = "SELECT timestep,value";
@@ -987,7 +987,7 @@ while ($row = pg_fetch_row($results)) {
 	$query .= " AND nscenario=$rgcreditmnversion";
 	$query .= " ORDER BY timestep ASC";
 	$creditresults = pg_query($pgconnection, $query);
-	while ($row = pg_fetch_row($creditresults)) {
+	while ($creditrow = pg_fetch_row($creditresults)) {
 		$insert_array=array();
 		$insert_array['model_version']=$rgmodelversion;
 		$insert_array['nzone']=$rgresponsezone;
@@ -997,8 +997,8 @@ while ($row = pg_fetch_row($results)) {
 		$insert_array['nscenario']=$rgstreamdepletionscenario;
 		$insert_array['nreach']=$rgstreamreach;
 		$insert_array['nyear']=0; //this is a temporary hack!
-		$insert_array['timestep'] = $row[0];
-		$insert_array['depletion_af'] = -$row[1]; // put stream credits in as a negative stream depletion
+		$insert_array['timestep'] = $creditrow[0];
+		$insert_array['depletion_af'] = -$creditrow[1]; // put stream credits in as a negative stream depletion
 		pg_insert($pgconnection,$rgstreamdepletiondatatable,$insert_array);
 	}
 }
